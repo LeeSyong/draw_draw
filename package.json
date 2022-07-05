@@ -1,0 +1,15 @@
+{
+  "name": "draw_draw",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LeeSyong/draw_draw.git"
+  },
+  "author": "Sun-Kyung Lee",
+  "license": "ISC",
+  "homepage": "https://github.com/LeeSyong/draw_draw#readme"
+}
