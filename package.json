@@ -1,15 +1,23 @@
 {
-  "name": "draw_draw",
+  "name": "draw",
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint .",
+    "lint:fix": "eslint -- --fix"
+  },
+  "devDependencies": {
+    "eslint": "^8.19.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-prettier": "^4.2.1",
+    "prettier": "^2.7.1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/LeeSyong/draw_draw.git"
+    "url": "git+https://github.com/LeeSyong/Draw.git"
   },
   "author": "Sun-Kyung Lee",
   "license": "ISC",
-  "homepage": "https://github.com/LeeSyong/draw_draw#readme"
+  "homepage": "https://github.com/LeeSyong/Draw#readme"
 }
