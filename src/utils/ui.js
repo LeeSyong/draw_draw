@@ -1,3 +1,5 @@
+import { MODE } from "../constants/mode";
+
 const ui = (() => {
   const addIcon = (iconInfo) => {
     const svgContainer = document.querySelector(`.${iconInfo.ALT}-wrapper`);
@@ -36,9 +38,37 @@ const ui = (() => {
     }, 1000);
   };
 
+  const changeBackgroundColor = (mode) => {
+    const { body } = document;
+
+    if (mode === MODE.PICTURE) {
+      body.classList.remove("white");
+      body.classList.add("black");
+    } else {
+      body.classList.remove("black");
+      body.classList.add("white");
+    }
+  };
+
+  const changeIconColor = (icons, mode) => {
+    if (mode === MODE.PICTURE) {
+      icons.forEach((icon) => {
+        icon.classList.remove("filter-black");
+        icon.classList.add("filter-white");
+      });
+    } else {
+      icons.forEach((icon) => {
+        icon.classList.remove("filter-white");
+        icon.classList.add("filter-black");
+      });
+    }
+  };
+
   return Object.freeze({
     addIcon,
     addText,
+    changeBackgroundColor,
+    changeIconColor,
   });
 })();
 

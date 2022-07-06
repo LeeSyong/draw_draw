@@ -7,6 +7,7 @@ import stepStore from "./store/stepStore";
 import { STEP } from "./constants/step";
 import { ICON } from "./constants/url";
 import { TEXT } from "./constants/text";
+import { MODE } from "./constants/mode";
 
 import ui from "./utils/ui";
 
@@ -15,6 +16,7 @@ import Space from "./drawing/Space";
 class App {
   constructor() {
     this._canvas = document.querySelector("#webgl-canvas");
+    this._changeModeWrapper = document.querySelector(".change-mode-wrapper");
 
     autorun(() => {
       switch (stepStore.currentStep) {
@@ -43,7 +45,30 @@ class App {
     stepStore.updateStep(STEP.START);
   }
 
-  _starting() {}
+  _starting() {
+    const changeMode = document.querySelector(".change-mode");
+    const listen = document.querySelector(".listen");
+    const showInfo = document.querySelector(".show-info");
+    const changeLang = document.querySelector(".change-lang");
+    const icons = [];
+    icons.push(changeMode, listen, showInfo, changeLang);
+
+    this._changeModeWrapper.addEventListener("click", () => {
+      if (stepStore.currentMode === MODE.PICTURE) {
+        stepStore.setMode(MODE.LETTER);
+
+        ui.changeBackgroundColor(MODE.LETTER);
+        ui.changeIconColor(icons, MODE.LETTER);
+        ui.addText(TEXT.DRAW_LETTER);
+      } else {
+        stepStore.setMode(MODE.PICTURE);
+
+        ui.changeBackgroundColor(MODE.PICTURE);
+        ui.changeIconColor(icons, MODE.PICTURE);
+        ui.addText(TEXT.DRAW_PICTURE);
+      }
+    });
+  }
 }
 
 new App();
