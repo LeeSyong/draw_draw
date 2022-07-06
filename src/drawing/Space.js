@@ -69,6 +69,9 @@ class Space {
     this.scene.add(this._group);
 
     this._tick(this._sizes);
+
+    window.addEventListener("resize", () => this._resize());
+    window.addEventListener("mousemove", (event) => this._mousemove(event));
   }
 
   _setupLight() {
@@ -125,6 +128,27 @@ class Space {
     this.renderer.render(this.scene, this.camera);
     this.control.update();
     window.requestAnimationFrame(this._tick.bind(this, sizes));
+  }
+
+  _resize() {
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+
+    this.camera.aspect = width / height;
+    this.camera.updateProjectionMatrix();
+
+    this.renderer.setSize(width, height);
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  }
+
+  _mousemove(event) {
+    this._mouseX = event.clientX;
+    this._mouseY = event.clientY;
+
+    const ratioX = (this._mouseX / window.innerWidth - 0.5) * 2;
+    const ratioY = (this._mouseY / window.innerHeight - 0.5) * 2;
+    this._group.rotation.y = ratioX * Math.PI * 0.1;
+    this._group.rotation.x = ratioY * Math.PI * 0.1;
   }
 }
 
