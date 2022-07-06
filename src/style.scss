@@ -1,4 +1,61 @@
 body {
   margin: 0;
   padding: 0;
+  background-color: #1e1e1e;
+  min-height: 100vh;
+  overflow: hidden;
+  position: relative;
+}
+
+#webgl-canvas {
+  position: absolute;
+  z-index: 5;
+}
+
+/* icon svg */
+.icon-wrapper {
+  z-index: 30;
+  display: inline-block;
+  position: absolute;
+  cursor: pointer;
+  &.change-lang-wrapper {
+    position: absolute;
+    top: 50%;
+    left: 96%;
+    transform: translate(-50%, -50%);
+  }
+  &.change-mode-wrapper {
+    position: absolute;
+    top: 93%;
+    left: 35%;
+    transform: translate(-50%, -50%);
+  }
+  &.listen-wrapper {
+    position: absolute;
+    top: 93%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 36px;
+    height: 36px;
+  }
+  &.show-info-wrapper {
+    position: absolute;
+    top: 92.8%;
+    left: 65%;
+    transform: translate(-50%, -50%);
+  }
+}
+
+/* info-text */
+.info-wrapper {
+  font-size: 20px;
+  font-weight: bold;
+  .info-text {
+    z-index: 30;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+  }
 }
