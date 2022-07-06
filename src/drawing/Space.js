@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
 import { ALPHAMAP } from "../constants/url";
 
@@ -8,6 +9,8 @@ class Space {
     this._clock = new THREE.Clock();
     this._count = 4000;
     this._distance = 2;
+    this._mouseX = 0;
+    this._mouseY = 0;
 
     this._setupModel();
   }
@@ -68,15 +71,61 @@ class Space {
     this._tick(this._sizes);
   }
 
-  _setupLight() {}
+  _setupLight() {
+    const color = 0xffffff;
+    const intensity = 1;
+    const light = new THREE.DirectionalLight(color, intensity);
+    light.position.set(-1, 2, 4);
 
-  _setupCamera(sizes) {}
+    this.scene.add(light);
+  }
 
-  _setupControls(camera, canvas) {}
+  _setupCamera(sizes) {
+    const camera = new THREE.PerspectiveCamera(
+      25,
+      sizes.width / sizes.height,
+      0.01,
+      1000,
+    );
 
-  _render(canvas, sizes) {}
+    camera.position.set(0, 0, 2);
 
-  _tick(sizes) {}
+    this.scene.add(camera);
+    this.camera = camera;
+  }
+
+  _setupControls(camera, canvas) {
+    const control = new OrbitControls(camera, canvas);
+
+    control.enableDamping = true;
+    control.maxDistance = 1.5;
+    control.maxDistance = 3.5;
+
+    this.control = control;
+  }
+
+  _render(canvas, sizes) {
+    const renderer = new THREE.WebGL1Renderer({
+      canvas,
+      antialias: true,
+      alpha: true,
+    });
+
+    renderer.setClearColor(0x000000, 0);
+    renderer.setSize(sizes.width, sizes.height);
+    renderer.setPixelRatio(window.devicePixelRatio);
+
+    this.renderer = renderer;
+  }
+
+  _tick(sizes) {
+    const elapsedTime = this._clock.getElapsedTime();
+    this._pointsObject.rotation.y = elapsedTime * 0.3;
+
+    this.renderer.render(this.scene, this.camera);
+    this.control.update();
+    window.requestAnimationFrame(this._tick.bind(this, sizes));
+  }
 }
 
 export default Space;
