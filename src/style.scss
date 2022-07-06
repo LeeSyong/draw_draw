@@ -1,4 +1,88 @@
+$background-color_picture-mode: #1e1e1e;
+$background-color-letter-mode: #fffefa;
+
+$icon-filter-black: invert(95%) sepia(88%) saturate(140%) hue-rotate(324deg)
+  brightness(109%) contrast(101%);
+$icon-filter-white: invert(8%) sepia(77%) saturate(17%) hue-rotate(332deg)
+  brightness(107%) contrast(95%);
+
 body {
   margin: 0;
   padding: 0;
+  background-color: $background-color_picture-mode;
+  min-height: 100vh;
+  overflow: hidden;
+  position: relative;
+  &.black {
+    background-color: $background-color_picture-mode;
+  }
+  &.white {
+    background-color: $background-color-letter-mode;
+  }
+}
+
+#webgl-canvas {
+  position: absolute;
+  z-index: 5;
+}
+
+/* icon svg */
+.icon-wrapper {
+  z-index: 30;
+  display: inline-block;
+  position: absolute;
+  cursor: pointer;
+  &.change-lang-wrapper {
+    position: absolute;
+    top: 50%;
+    left: 96%;
+    transform: translate(-50%, -50%);
+  }
+  &.change-mode-wrapper {
+    position: absolute;
+    top: 93%;
+    left: 35%;
+    transform: translate(-50%, -50%);
+  }
+  &.listen-wrapper {
+    position: absolute;
+    top: 93%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 36px;
+    height: 36px;
+  }
+  &.show-info-wrapper {
+    position: absolute;
+    top: 92.8%;
+    left: 65%;
+    transform: translate(-50%, -50%);
+  }
+}
+
+.filter-black {
+  filter: $icon-filter-black;
+}
+
+.filter-white {
+  filter: $icon-filter-white;
+}
+
+/* info text */
+.info-wrapper {
+  font-size: 20px;
+  font-weight: bold;
+  .info-text {
+    z-index: 30;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    &.info-picture {
+      color: $background-color-letter-mode;
+    }
+    &.info-letter {
+      color: $background-color_picture-mode;
+    }
+  }
 }
