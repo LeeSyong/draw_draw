@@ -3,7 +3,7 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
 import { ALPHAMAP } from "../constants/url";
 
-class Space {
+class WebGLCanvas {
   constructor(canvas) {
     this._canvas = canvas;
     this._clock = new THREE.Clock();
@@ -152,4 +152,4 @@ class Space {
   }
 }
 
-export default Space;
+export default WebGLCanvas;

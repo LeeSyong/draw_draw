@@ -11,11 +11,11 @@ import { MODE } from "./constants/mode";
 
 import ui from "./utils/ui";
 
-import Space from "./drawing/Space";
+import WebGLCanvas from "./canvas/WebGL";
 
 class App {
   constructor() {
-    this._canvas = document.querySelector("#webgl-canvas");
+    this._webglCanvas = document.querySelector("#webgl-canvas");
     this._changeModeWrapper = document.querySelector(".change-mode-wrapper");
 
     autorun(() => {
@@ -31,7 +31,7 @@ class App {
 
     stepStore.updateStep(STEP.LOAD);
 
-    this.space = new Space(this._canvas);
+    this.webglSpace = new WebGLCanvas(this._webglCanvas);
   }
 
   _loading() {
