@@ -1,5 +1,7 @@
 import stepStore from "../store/stepStore";
 
+import { MODE } from "../constants/mode";
+
 import draw from "../utils/draw";
 
 class DrawingCanvas {
@@ -10,6 +12,8 @@ class DrawingCanvas {
     this._isDrawing = false;
     this._drawnAt = 0;
     this._highlightStartPoint = false;
+    this._drawingInterval = null;
+    this._intervalLastPosition = [-1, -1];
     this._currentShape = null;
     this._prevX = 0;
     this._prevY = 0;
@@ -49,7 +53,30 @@ class DrawingCanvas {
     this._highlightStartPoint = false;
   }
 
-  _drawXY(event) {}
+  _drawXY(event) {
+    if (!this._isDrawing) {
+      return;
+    }
+
+    if (stepStore.currentMode === MODE.PICTURE) {
+      this._drawingInterval = setInterval(
+        this._drawingShape(this._intervalLastPosition),
+        9,
+      );
+    }
+
+    this._updateXY(event);
+    this._resize();
+
+    draw.drawLine(
+      this._ctx,
+      this._prevX,
+      this._prevY,
+      this._currX,
+      this._currY,
+      stepStore.currentMode,
+    );
+  }
 
   _disengage(event) {}
 
@@ -58,6 +85,21 @@ class DrawingCanvas {
     this._prevY = this._currY;
     this._currX = event.clientX - this._canvas.offsetLeft;
     this._currY = event.clientY - this._canvas.offsetTop;
+  }
+
+  _drawingShape(intervalLastPosition) {
+    if (
+      intervalLastPosition[0] === this._prevX &&
+      intervalLastPosition[1] === this._prevY
+    ) {
+      return;
+    }
+
+    this._currentShape[0].push(this._prevX);
+    this._currentShape[1].push(this._prevY);
+    this._currentShape[2].push(Date.now() - this._drawnAt);
+
+    this._intervalLastPosition = [this._prevX, this._prevY];
   }
 
   _resize() {
