@@ -26,6 +26,13 @@ body {
   z-index: 5;
 }
 
+#drawing-canvas {
+  position: absolute;
+  z-index: 5;
+  width: 100%;
+  height: 100%;
+}
+
 /* icon svg */
 .icon-wrapper {
   z-index: 30;
