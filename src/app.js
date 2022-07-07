@@ -18,6 +18,7 @@ class App {
   constructor() {
     this._webglCanvas = document.querySelector("#webgl-canvas");
     this._drawingCanvas = document.querySelector("#drawing-canvas");
+    this._drawingCtx = this._drawingCanvas.getContext("2d");
     this._changeModeWrapper = document.querySelector(".change-mode-wrapper");
 
     autorun(() => {
@@ -57,6 +58,13 @@ class App {
     icons.push(changeMode, listen, showInfo, changeLang);
 
     this._changeModeWrapper.addEventListener("click", () => {
+      this._drawingCtx.clearRect(
+        0,
+        0,
+        this._drawingCanvas.width,
+        this._drawingCanvas.height,
+      );
+
       if (stepStore.currentMode === MODE.PICTURE) {
         stepStore.setMode(MODE.LETTER);
 

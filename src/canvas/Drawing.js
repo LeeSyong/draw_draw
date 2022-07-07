@@ -1,8 +1,11 @@
+import { createWorker } from "tesseract.js";
+
 import stepStore from "../store/stepStore";
 
 import { MODE } from "../constants/mode";
 
 import draw from "../utils/draw";
+import autodraw from "../api/autodraw";
 
 class DrawingCanvas {
   constructor(canvas) {
@@ -15,6 +18,7 @@ class DrawingCanvas {
     this._drawingInterval = null;
     this._intervalLastPosition = [-1, -1];
     this._currentShape = null;
+    this._shapes = [];
     this._prevX = 0;
     this._prevY = 0;
     this._currX = 0;
@@ -32,6 +36,16 @@ class DrawingCanvas {
     );
 
     window.addEventListener("resize", () => this._resize());
+
+    this.initWorker();
+  }
+
+  async initWorker() {
+    this._worker = createWorker();
+
+    await this._worker.load();
+    await this._worker.loadLanguage("kor");
+    await this._worker.initialize("kor");
   }
 
   _engage(event) {
@@ -78,7 +92,42 @@ class DrawingCanvas {
     );
   }
 
-  _disengage(event) {}
+  async _disengage(event) {
+    this._isDrawing = false;
+
+    if (!this._isDrawing && event.type === "mouseout") {
+      return;
+    }
+
+    if (stepStore.currentMode === MODE.PICTURE) {
+      clearInterval(this._drawingInterval);
+      this._shapes.push(this._currentShape);
+
+      (() => {
+        if (this._timer) {
+          clearTimeout(this._timer);
+        }
+
+        this._timer = setTimeout(async () => {
+          const data = await autodraw.getSuggestions(this._shapes);
+          const results = autodraw.extractDataFromApi(data);
+          const parsedResults = autodraw.parseSuggestions(results);
+        }, 1000);
+      })();
+    } else {
+      (() => {
+        if (this._timer) {
+          clearTimeout(this._timer);
+        }
+
+        this._timer = setTimeout(async () => {
+          const {
+            data: { text },
+          } = await this._worker.recognize(this._canvas);
+        }, 1000);
+      })();
+    }
+  }
 
   _updateXY(event) {
     this._prevX = this._currX;

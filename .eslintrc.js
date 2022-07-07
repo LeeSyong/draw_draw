@@ -20,7 +20,6 @@ module.exports = {
     "no-dupe-else-if": ["error"],
     "no-unused-vars": ["off"],
     "no-irregular-whitespace": ["error"],
-    "camelcase": ["error"],
     "curly": ["warn"],
     "eqeqeq": ["warn"],
     "no-var": ["error"],
