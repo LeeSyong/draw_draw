@@ -19,12 +19,19 @@ class App {
     this._webglCanvas = document.querySelector("#webgl-canvas");
     this._drawingCanvas = document.querySelector("#drawing-canvas");
     this._drawingCtx = this._drawingCanvas.getContext("2d");
-    this._changeModeWrapper = document.querySelector(".change-mode-wrapper");
+    this._changeModeIcon = document.querySelector(".change-mode");
+    this._changeLangIcon = document.querySelector(".change-lang");
+    this._showInfoIcon = document.querySelector(".show-info");
+    this._icons = [
+      this._changeModeIcon,
+      this._showInfoIcon,
+      this._changeLangIcon,
+    ];
 
     autorun(() => {
       switch (stepStore.currentStep) {
         case STEP.LOAD:
-          setTimeout(this._loading, 2000);
+          setTimeout(this._loading.bind(this), 2000);
           break;
         case STEP.START:
           this._starting();
@@ -32,53 +39,49 @@ class App {
       }
     });
 
-    stepStore.updateStep(STEP.LOAD);
-
     this.webglSpace = new WebGLCanvas(this._webglCanvas);
-    this.drawingSpace = new DrawingCanvas(this._drawingCanvas);
   }
 
   _loading() {
-    ui.addIcon(ICON.GLOBAL);
-    ui.addIcon(ICON.NOTE);
-    ui.addIcon(ICON.HEAR);
-    ui.addIcon(ICON.INFO);
+    this.drawingSpace = new DrawingCanvas(this._drawingCanvas);
 
+    ui.showIcon(ICON.CHANGE_LETTER_MODE);
+    ui.showIcon(ICON.CHANGE_LANG);
+    ui.showIcon(ICON.SHOW_INFO);
     ui.addText(TEXT.DRAW_PICTURE);
 
-    stepStore.updateStep(STEP.START);
+    this._changeModeIcon.addEventListener("click", () => {
+      if (stepStore.currentMode === MODE.PICTURE) {
+        stepStore.setMode(MODE.LETTER);
+      } else {
+        stepStore.setMode(MODE.PICTURE);
+      }
+
+      stepStore.updateStep(STEP.START);
+    });
+
+    this._changeLangIcon.addEventListener("click", () => {});
+
+    this._showInfoIcon.addEventListener("click", () => {});
   }
 
   _starting() {
-    const changeMode = document.querySelector(".change-mode");
-    const listen = document.querySelector(".listen");
-    const showInfo = document.querySelector(".show-info");
-    const changeLang = document.querySelector(".change-lang");
-    const icons = [];
-    icons.push(changeMode, listen, showInfo, changeLang);
+    this._drawingCtx.clearRect(
+      0,
+      0,
+      this._drawingCanvas.width,
+      this._drawingCanvas.height,
+    );
 
-    this._changeModeWrapper.addEventListener("click", () => {
-      this._drawingCtx.clearRect(
-        0,
-        0,
-        this._drawingCanvas.width,
-        this._drawingCanvas.height,
-      );
-
-      if (stepStore.currentMode === MODE.PICTURE) {
-        stepStore.setMode(MODE.LETTER);
-
-        ui.changeBackgroundColor(MODE.LETTER);
-        ui.changeIconColor(icons, MODE.LETTER);
-        ui.addText(TEXT.DRAW_LETTER);
-      } else {
-        stepStore.setMode(MODE.PICTURE);
-
-        ui.changeBackgroundColor(MODE.PICTURE);
-        ui.changeIconColor(icons, MODE.PICTURE);
-        ui.addText(TEXT.DRAW_PICTURE);
-      }
-    });
+    if (stepStore.currentMode === MODE.PICTURE) {
+      ui.changeBackgroundColor(MODE.PICTURE);
+      ui.changeIconColor(this._icons, MODE.PICTURE);
+      ui.addText(TEXT.DRAW_PICTURE);
+    } else {
+      ui.changeBackgroundColor(MODE.LETTER);
+      ui.changeIconColor(this._icons, MODE.LETTER);
+      ui.addText(TEXT.DRAW_LETTER);
+    }
   }
 }
 
