@@ -1,19 +1,11 @@
 import { MODE } from "../constants/mode";
 
 const ui = (() => {
-  const addIcon = (iconInfo) => {
-    const svgContainer = document.querySelector(`.${iconInfo.ALT}-wrapper`);
-    const svgImg = document.createElement("img");
+  const showIcon = (iconClass) => {
+    const icon = document.querySelector(`.${iconClass}`);
 
-    svgImg.src = iconInfo.SRC;
-    svgImg.alt = iconInfo.ALT;
-    svgImg.classList.add("svg-img");
-    svgImg.classList.add(iconInfo.ALT);
-    svgImg.classList.add("filter-white");
-
-    svgContainer.appendChild(svgImg);
-
-    return svgImg;
+    icon.classList.remove("hide");
+    icon.classList.add("show");
   };
 
   const addText = (text) => {
@@ -65,7 +57,7 @@ const ui = (() => {
   };
 
   return Object.freeze({
-    addIcon,
+    showIcon,
     addText,
     changeBackgroundColor,
     changeIconColor,

@@ -1,20 +1,8 @@
 const ICON = {
-  GLOBAL: {
-    SRC: "assets/global.svg",
-    ALT: "change-lang",
-  },
-  NOTE: {
-    SRC: "assets/letterMode.svg",
-    ALT: "change-mode",
-  },
-  HEAR: {
-    SRC: "assets/listen.svg",
-    ALT: "listen",
-  },
-  INFO: {
-    SRC: "assets/info.svg",
-    ALT: "show-info",
-  },
+  CHANGE_LETTER_MODE: "change-mode",
+  CHANGE_LANG: "change-lang",
+  SHOW_INFO: "show-info",
+  SOUND: "sound",
 };
 
 const ALPHAMAP = {
