@@ -1,7 +1,10 @@
 import { createWorker } from "tesseract.js";
+import { toJS } from "mobx";
 
 import stepStore from "../store/stepStore";
+import suggestStore from "../store/suggestStore";
 
+import { STEP } from "../constants/step";
 import { MODE } from "../constants/mode";
 
 import draw from "../utils/draw";
@@ -29,8 +32,6 @@ class DrawingCanvas {
     this._canvas.addEventListener("mousedown", (event) => this._engage(event));
     this._canvas.addEventListener("mousemove", (event) => this._drawXY(event)); // 그림 쪽에서는 putPoints
     this._canvas.addEventListener("mouseup", (event) => this._disengage(event));
-    this._canvas.addEventListener("mouseup", (event) => this._disengage(event));
-
     this._canvas.addEventListener("mouseout", (event) =>
       this._disengage(event),
     );
@@ -111,8 +112,12 @@ class DrawingCanvas {
         this._timer = setTimeout(async () => {
           const data = await autodraw.getSuggestions(this._shapes);
           const results = autodraw.extractDataFromApi(data);
-          const parsedResults = autodraw.parseSuggestions(results);
-        }, 1000);
+          const parsedSuggestions = autodraw.parseSuggestions(results);
+
+          suggestStore.setSuggestions(parsedSuggestions);
+          suggestStore.setSuggestionUrl(parsedSuggestions[0].url);
+          stepStore.updateStep(STEP.SUGGEST);
+        }, 1500);
       })();
     } else {
       (() => {

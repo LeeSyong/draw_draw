@@ -1,8 +1,9 @@
 import "./style.scss";
 
-import { autorun } from "mobx";
+import { autorun, toJS } from "mobx";
 
 import stepStore from "./store/stepStore";
+import suggestStore from "./store/suggestStore";
 
 import { STEP } from "./constants/step";
 import { ICON } from "./constants/url";
@@ -19,6 +20,7 @@ class App {
     this._webglCanvas = document.querySelector("#webgl-canvas");
     this._drawingCanvas = document.querySelector("#drawing-canvas");
     this._drawingCtx = this._drawingCanvas.getContext("2d");
+    this._suggestionList = document.querySelector(".suggestions ul");
     this._changeModeIcon = document.querySelector(".change-mode");
     this._changeLangIcon = document.querySelector(".change-lang");
     this._showInfoIcon = document.querySelector(".show-info");
@@ -27,6 +29,7 @@ class App {
       this._showInfoIcon,
       this._changeLangIcon,
     ];
+    this._soundIcon = document.querySelector(".sound");
 
     autorun(() => {
       switch (stepStore.currentStep) {
@@ -35,6 +38,9 @@ class App {
           break;
         case STEP.START:
           this._starting();
+          break;
+        case STEP.SUGGEST:
+          this._suggesting();
           break;
       }
     });
@@ -63,6 +69,8 @@ class App {
     this._changeLangIcon.addEventListener("click", () => {});
 
     this._showInfoIcon.addEventListener("click", () => {});
+
+    this._soundIcon.addEventListener("click", () => {});
   }
 
   _starting() {
@@ -72,6 +80,11 @@ class App {
       this._drawingCanvas.width,
       this._drawingCanvas.height,
     );
+    this._suggestionList.innerText = "";
+    this._drawingCanvas.style.zIndex = 5;
+
+    ui.hideIcon(ICON.SOUND);
+    suggestStore.setSuggestions([]);
 
     if (stepStore.currentMode === MODE.PICTURE) {
       ui.changeBackgroundColor(MODE.PICTURE);
@@ -82,6 +95,20 @@ class App {
       ui.changeIconColor(this._icons, MODE.LETTER);
       ui.addText(TEXT.DRAW_LETTER);
     }
+  }
+
+  _suggesting() {
+    this._drawingCtx.clearRect(
+      0,
+      0,
+      this._drawingCanvas.width,
+      this._drawingCanvas.height,
+    );
+    this._suggestionList.innerText = "";
+
+    ui.showIcon(ICON.SOUND);
+    ui.displaySuggestions(toJS(suggestStore.suggestions));
+    ui.setBackgroundColorRandomly();
   }
 }
 

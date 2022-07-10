@@ -1,5 +1,11 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import { autorun } from "mobx";
+
+import stepStore from "../store/stepStore";
+import suggestStore from "../store/suggestStore";
+
+import { STEP } from "../constants/step";
 
 import { ALPHAMAP } from "../constants/url";
 
@@ -12,10 +18,16 @@ class WebGLCanvas {
     this._mouseX = 0;
     this._mouseY = 0;
 
-    this._setupModel();
+    autorun(async () => {
+      if (suggestStore.suggestionUrl === "") {
+        this._setupBackgroundModel();
+      } else {
+        await this._setupSuggestionModel();
+      }
+    });
   }
 
-  _setupModel() {
+  _setupBackgroundModel() {
     const textureLoader = new THREE.TextureLoader();
     const alphaMap = textureLoader.load(ALPHAMAP.CIRCLE);
 
@@ -45,10 +57,71 @@ class WebGLCanvas {
       transparent: true,
     });
 
-    this._pointsObject = new THREE.Points(pointGeometry, pointMaterial);
+    this._backgroundPoints = new THREE.Points(pointGeometry, pointMaterial);
 
-    this._group = new THREE.Group();
-    this._group.add(this._pointsObject);
+    this._backgroundGroup = new THREE.Group();
+    this._backgroundGroup.add(this._backgroundPoints);
+
+    this._init();
+  }
+
+  async _setupSuggestionModel() {
+    const res = await fetch(suggestStore.suggestionUrl);
+    const text = await res.text();
+    const svg = new DOMParser()
+      .parseFromString(text, "image/svg+xml")
+      .querySelector("svg");
+    document.body.appendChild(svg);
+
+    const svgViewBoxWidth = svg.viewBox.baseVal.width;
+    const svgViewBoxHeight = svg.viewBox.baseVal.height;
+
+    const paths = svg.querySelectorAll("path");
+    svg.remove();
+
+    const vertices = [];
+
+    paths.forEach((path) => {
+      const length = path.getTotalLength();
+
+      for (let i = 0; i < length; i += 30) {
+        const point = path.getPointAtLength(i);
+        const vector = new THREE.Vector3(point.x, -point.y, 0);
+
+        vector.x += (Math.random() - 0.5) * 30;
+        vector.y += (Math.random() - 0.5) * 30;
+        vector.z += (Math.random() - 0.5) * 70;
+
+        vertices.push(vector);
+      }
+    });
+
+    const textureLoader = new THREE.TextureLoader();
+    const alphaMap = textureLoader.load(ALPHAMAP.CIRCLE);
+
+    const colors = new Float32Array(this._count * 3).map((color) =>
+      Math.random(),
+    );
+
+    const geometry = new THREE.BufferGeometry().setFromPoints(vertices);
+    geometry.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
+
+    const material = new THREE.PointsMaterial({
+      size: 150,
+      alphaMap,
+      alphaTest: 0.01,
+      vertexColors: true,
+      transparent: true,
+    });
+
+    this._suggestionPoints = new THREE.Points(geometry, material);
+
+    this._suggestionPoints.position.x -= svgViewBoxWidth / 2;
+    this._suggestionPoints.position.y += svgViewBoxHeight / 2;
+    this._suggestionPoints.position.z = -4500;
+
+    this._suggestionGroup = new THREE.Group();
+    this._suggestionGroup.add(this._suggestionPoints, this._backgroundGroup);
 
     this._init();
   }
@@ -66,7 +139,7 @@ class WebGLCanvas {
     this._setupControls(this.camera, this._canvas);
     this._render(this._canvas, this._sizes);
 
-    this.scene.add(this._group);
+    this.scene.add(this._backgroundGroup);
 
     this._tick(this._sizes);
 
@@ -88,7 +161,7 @@ class WebGLCanvas {
       25,
       sizes.width / sizes.height,
       0.01,
-      1000,
+      5000,
     );
 
     camera.position.set(0, 0, 2);
@@ -101,8 +174,6 @@ class WebGLCanvas {
     const control = new OrbitControls(camera, canvas);
 
     control.enableDamping = true;
-    control.maxDistance = 1.5;
-    control.maxDistance = 3.5;
 
     this.control = control;
   }
@@ -123,7 +194,16 @@ class WebGLCanvas {
 
   _tick(sizes) {
     const elapsedTime = this._clock.getElapsedTime();
-    this._pointsObject.rotation.y = elapsedTime * 0.3;
+
+    this._backgroundPoints.rotation.y = elapsedTime * 0.3;
+
+    if (stepStore.currentStep === STEP.SUGGEST) {
+      this.scene.remove(this._backgroundGroup);
+      this.scene.add(this._suggestionGroup);
+    } else {
+      this.scene.remove(this._suggestionGroup);
+      this.scene.add(this._backgroundGroup);
+    }
 
     this.renderer.render(this.scene, this.camera);
     this.control.update();
@@ -147,8 +227,9 @@ class WebGLCanvas {
 
     const ratioX = (this._mouseX / window.innerWidth - 0.5) * 2;
     const ratioY = (this._mouseY / window.innerHeight - 0.5) * 2;
-    this._group.rotation.y = ratioX * Math.PI * 0.1;
-    this._group.rotation.x = ratioY * Math.PI * 0.1;
+
+    this._backgroundGroup.rotation.y = ratioX * Math.PI * 0.1;
+    this._backgroundGroup.rotation.x = ratioY * Math.PI * 0.1;
   }
 }
 
