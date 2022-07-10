@@ -17,6 +17,7 @@ class DrawingCanvas {
 
     this._isDrawing = false;
     this._drawnAt = 0;
+    this._drawingDone = false;
     this._highlightStartPoint = false;
     this._drawingInterval = null;
     this._intervalLastPosition = [-1, -1];
@@ -30,7 +31,7 @@ class DrawingCanvas {
     this._resize();
 
     this._canvas.addEventListener("mousedown", (event) => this._engage(event));
-    this._canvas.addEventListener("mousemove", (event) => this._drawXY(event)); // 그림 쪽에서는 putPoints
+    this._canvas.addEventListener("mousemove", (event) => this._drawXY(event));
     this._canvas.addEventListener("mouseup", (event) => this._disengage(event));
     this._canvas.addEventListener("mouseout", (event) =>
       this._disengage(event),
@@ -50,6 +51,11 @@ class DrawingCanvas {
   }
 
   _engage(event) {
+    if (this._drawingDone) {
+      this._shapes = [];
+      this._drawingDone = false;
+    }
+
     this._updateXY(event);
 
     this._isDrawing = true;
@@ -94,15 +100,14 @@ class DrawingCanvas {
   }
 
   async _disengage(event) {
-    this._isDrawing = false;
-
     if (!this._isDrawing && event.type === "mouseout") {
       return;
     }
 
+    this._isDrawing = false;
+
     if (stepStore.currentMode === MODE.PICTURE) {
       clearInterval(this._drawingInterval);
-      this._shapes.push(this._currentShape);
 
       (() => {
         if (this._timer) {
@@ -110,6 +115,10 @@ class DrawingCanvas {
         }
 
         this._timer = setTimeout(async () => {
+          this._shapes.push(this._currentShape);
+
+          this._drawingDone = true;
+
           const data = await autodraw.getSuggestions(this._shapes);
           const results = autodraw.extractDataFromApi(data);
           const parsedSuggestions = autodraw.parseSuggestions(results);

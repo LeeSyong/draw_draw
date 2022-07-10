@@ -133,13 +133,13 @@ const ui = (() => {
 
       event.target.classList.add("selected");
 
-      const selectedSuggestion = suggestions.filter(
-        (suggestion) => suggestion.name === event.target.textContent,
-      );
+      suggestions.forEach((suggestion) => {
+        if (suggestion.name === event.target.textContent) {
+          suggestStore.setSuggestionUrl(suggestion.url);
 
-      ui.setBackgroundColorRandomly();
-
-      suggestStore.setSuggestionUrl(selectedSuggestion[0].url);
+          ui.setBackgroundColorRandomly();
+        }
+      });
     };
 
     suggestionItems.forEach((suggestionItem) => {
