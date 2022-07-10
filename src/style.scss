@@ -1,5 +1,7 @@
 $background-color_picture-mode: #1e1e1e;
 $background-color-letter-mode: #fffefa;
+$suggestion-color: #eeeeeecc;
+$suggestion-color-selected: #fffefa;
 
 $icon-filter-black: invert(95%) sepia(88%) saturate(140%) hue-rotate(324deg)
   brightness(109%) contrast(101%);
@@ -16,17 +18,11 @@ body {
   min-height: 100vh;
   background-color: $background-color_picture-mode;
   overflow: hidden;
-  &.black {
-    background-color: $background-color_picture-mode;
-  }
-  &.white {
-    background-color: $background-color-letter-mode;
-  }
+  user-select: none;
 }
 
 #webgl-canvas {
   position: absolute;
-  z-index: 5;
 }
 
 #drawing-canvas {
@@ -41,13 +37,14 @@ body {
   position: absolute;
   z-index: 30;
   display: inline-block;
-  cursor: pointer;
   .icon-img {
     &.hide {
-      opacity: 0;
+      visibility: hidden;
+      cursor: none;
     }
     &.show {
-      opacity: 1;
+      visibility: visible;
+      cursor: pointer;
       transition: all 200ms ease-in;
     }
   }
@@ -76,7 +73,6 @@ body {
     top: 50%;
     left: 96%;
     transform: translate(-50%, -50%);
-    visibility: hidden;
   }
 }
 
@@ -104,5 +100,29 @@ body {
     &.info-letter {
       color: $background-color_picture-mode;
     }
+  }
+}
+
+.suggestions {
+  position: absolute;
+  z-index: 30;
+  top: 50%;
+  left: 4%;
+  transform: translateY(-50%);
+}
+
+.suggestions ul {
+  display: inline-block;
+}
+
+.suggestion {
+  height: 2rem;
+  padding: 0;
+  color: $suggestion-color;
+  font-weight: bold;
+  list-style: none;
+  cursor: pointer;
+  &.selected {
+    color: $suggestion-color-selected;
   }
 }
