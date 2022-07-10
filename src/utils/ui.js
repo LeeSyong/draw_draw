@@ -101,7 +101,51 @@ const ui = (() => {
     body.style.backgroundColor = hex;
   };
 
-  const displaySuggestions = async (suggestions) => {};
+  const displaySuggestions = async (suggestions) => {
+    const suggestionList = document.querySelector(".suggestions ul");
+
+    for (let i = 0; i < suggestions.length; i++) {
+      const suggestion = suggestions[i];
+      const suggestionItem = document.createElement("li");
+
+      try {
+        await axios(suggestion.url);
+      } catch (error) {
+        continue;
+      }
+
+      suggestionItem.textContent = suggestion.name;
+      suggestionItem.classList.add("suggestion");
+      suggestionList.appendChild(suggestionItem);
+      suggestionList.visibility = "visible";
+
+      if (i === 0) {
+        suggestionItem.classList.add("selected");
+      }
+    }
+
+    const suggestionItems = suggestionList.querySelectorAll(".suggestion");
+
+    const handleSuggestionItemclick = (event) => {
+      suggestionItems.forEach((suggestionItem) => {
+        suggestionItem.classList.remove("selected");
+      });
+
+      event.target.classList.add("selected");
+
+      const selectedSuggestion = suggestions.filter(
+        (suggestion) => suggestion.name === event.target.textContent,
+      );
+
+      ui.setBackgroundColorRandomly();
+
+      suggestStore.setSuggestionUrl(selectedSuggestion[0].url);
+    };
+
+    suggestionItems.forEach((suggestionItem) => {
+      suggestionItem.addEventListener("click", handleSuggestionItemclick);
+    });
+  };
 
   return Object.freeze({
     showIcon,
