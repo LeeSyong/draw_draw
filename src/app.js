@@ -84,6 +84,9 @@ class App {
     this._drawingCanvas.style.zIndex = 5;
 
     ui.hideIcon(ICON.SOUND);
+    suggestStore.setSuggestions([]);
+    suggestStore.setSuggestionUrl("");
+    suggestStore.setText("");
 
     if (stepStore.currentMode === MODE.PICTURE) {
       ui.changeBackgroundColor(MODE.PICTURE);
