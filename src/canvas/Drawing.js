@@ -1,11 +1,12 @@
 import { createWorker } from "tesseract.js";
-import { toJS } from "mobx";
 
 import stepStore from "../store/stepStore";
 import suggestStore from "../store/suggestStore";
 
 import { STEP } from "../constants/step";
 import { MODE } from "../constants/mode";
+
+import ui from "../utils/ui";
 
 import draw from "../utils/draw";
 import autodraw from "../api/autodraw";
@@ -27,15 +28,15 @@ class DrawingCanvas {
     this._prevY = 0;
     this._currX = 0;
     this._currY = 0;
+    this._isReady = false;
+    this._timer = null;
 
     this._resize();
 
-    this._canvas.addEventListener("mousedown", (event) => this._engage(event));
-    this._canvas.addEventListener("mousemove", (event) => this._drawXY(event));
-    this._canvas.addEventListener("mouseup", (event) => this._disengage(event));
-    this._canvas.addEventListener("mouseout", (event) =>
-      this._disengage(event),
-    );
+    this._canvas.addEventListener("mousedown", this._engage.bind(this));
+    this._canvas.addEventListener("mousemove", this._drawXY.bind(this));
+    this._canvas.addEventListener("mouseup", this._disengage.bind(this));
+    this._canvas.addEventListener("mouseout", this._disengage.bind(this));
 
     window.addEventListener("resize", () => this._resize());
 
@@ -48,6 +49,8 @@ class DrawingCanvas {
     await this._worker.load();
     await this._worker.loadLanguage("kor");
     await this._worker.initialize("kor");
+
+    this._isReady = true;
   }
 
   _engage(event) {
@@ -115,6 +118,10 @@ class DrawingCanvas {
         }
 
         this._timer = setTimeout(async () => {
+          if (this._isDrawing) {
+            return;
+          }
+
           this._shapes.push(this._currentShape);
 
           this._drawingDone = true;
@@ -126,6 +133,8 @@ class DrawingCanvas {
           suggestStore.setSuggestions(parsedSuggestions);
           suggestStore.setSuggestionUrl(parsedSuggestions[0].url);
           stepStore.updateStep(STEP.SUGGEST);
+
+          this._timer = null;
         }, 1500);
       })();
     } else {
@@ -135,10 +144,24 @@ class DrawingCanvas {
         }
 
         this._timer = setTimeout(async () => {
-          const {
-            data: { text },
-          } = await this._worker.recognize(this._canvas);
-        }, 1000);
+          if (this._isDrawing) {
+            return;
+          }
+
+          if (this._isReady) {
+            const {
+              data: { text },
+            } = await this._worker.recognize(this._canvas);
+
+            this._timer = null;
+
+            suggestStore.setText(text);
+            stepStore.updateStep(STEP.SUGGEST);
+
+            this._ctx.clearRect(0, 0, this._canvas.width, this._canvas.height);
+            ui.setBackgroundColorRandomly();
+          }
+        }, 1500);
       })();
     }
   }

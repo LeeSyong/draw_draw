@@ -84,7 +84,6 @@ class App {
     this._drawingCanvas.style.zIndex = 5;
 
     ui.hideIcon(ICON.SOUND);
-    suggestStore.setSuggestions([]);
 
     if (stepStore.currentMode === MODE.PICTURE) {
       ui.changeBackgroundColor(MODE.PICTURE);
@@ -104,11 +103,15 @@ class App {
       this._drawingCanvas.width,
       this._drawingCanvas.height,
     );
-    this._suggestionList.innerText = "";
 
     ui.showIcon(ICON.SOUND);
-    ui.displaySuggestions(toJS(suggestStore.suggestions));
     ui.setBackgroundColorRandomly();
+
+    if (stepStore.currentMode === MODE.PICTURE) {
+      this._suggestionList.innerText = "";
+
+      ui.displaySuggestions(toJS(suggestStore.suggestions));
+    }
   }
 }
 
