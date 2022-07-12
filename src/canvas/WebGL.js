@@ -34,6 +34,10 @@ class WebGLCanvas {
         this._setupBackgroundModel();
       }
     });
+
+    window.addEventListener("wheel", this._zoom.bind(this), {
+      passive: false,
+    });
   }
 
   _setupBackgroundModel() {
@@ -278,6 +282,18 @@ class WebGLCanvas {
 
     this.renderer.setSize(width, height);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  }
+
+  _zoom(event) {
+    event.preventDefault();
+
+    let { zoom } = this.camera;
+
+    zoom += event.deltaY * -0.001;
+    zoom = Math.min(Math.max(0.7, zoom), 1.7);
+
+    this.camera.zoom = zoom;
+    this.camera.updateProjectionMatrix();
   }
 }
 
