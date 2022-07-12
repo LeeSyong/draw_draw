@@ -1,15 +1,24 @@
 import axios from "axios";
 
+import stepStore from "../store/stepStore";
 import suggestStore from "../store/suggestStore";
 
 import { MODE } from "../constants/mode";
 
 const ui = (() => {
-  const showIcon = (iconClass) => {
+  const showIcon = (iconClass, mode) => {
     const icon = document.querySelector(`.${iconClass}`);
 
     icon.classList.remove("hide");
     icon.classList.add("show");
+
+    if (stepStore.currentMode === MODE.PICTURE) {
+      icon.classList.remove("filter-black");
+      icon.classList.add("filter-white");
+    } else {
+      icon.classList.remove("filter-white");
+      icon.classList.add("filter-black");
+    }
   };
 
   const hideIcon = (iconClass) => {
@@ -133,13 +142,13 @@ const ui = (() => {
 
       event.target.classList.add("selected");
 
-      const selectedSuggestion = suggestions.filter(
-        (suggestion) => suggestion.name === event.target.textContent,
-      );
+      suggestions.forEach((suggestion) => {
+        if (suggestion.name === event.target.textContent) {
+          suggestStore.setSuggestionUrl(suggestion.url);
 
-      ui.setBackgroundColorRandomly();
-
-      suggestStore.setSuggestionUrl(selectedSuggestion[0].url);
+          ui.setBackgroundColorRandomly();
+        }
+      });
     };
 
     suggestionItems.forEach((suggestionItem) => {

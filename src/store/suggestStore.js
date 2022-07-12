@@ -4,12 +4,15 @@ class SuggestStore {
   constructor() {
     this.suggestions = [];
     this.suggestionUrl = "";
+    this.text = "";
 
     makeObservable(this, {
       suggestions: observable,
       suggestionUrl: observable,
+      text: observable,
       setSuggestions: action,
       setSuggestionUrl: action,
+      setText: action,
     });
   }
 
@@ -19,6 +22,10 @@ class SuggestStore {
 
   setSuggestionUrl(suggestionUrl) {
     this.suggestionUrl = suggestionUrl;
+  }
+
+  setText(text) {
+    this.text = text;
   }
 }
 

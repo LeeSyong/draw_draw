@@ -1,11 +1,12 @@
 import { createWorker } from "tesseract.js";
-import { toJS } from "mobx";
 
 import stepStore from "../store/stepStore";
 import suggestStore from "../store/suggestStore";
 
 import { STEP } from "../constants/step";
 import { MODE } from "../constants/mode";
+
+import ui from "../utils/ui";
 
 import draw from "../utils/draw";
 import autodraw from "../api/autodraw";
@@ -17,6 +18,7 @@ class DrawingCanvas {
 
     this._isDrawing = false;
     this._drawnAt = 0;
+    this._drawingDone = false;
     this._highlightStartPoint = false;
     this._drawingInterval = null;
     this._intervalLastPosition = [-1, -1];
@@ -26,15 +28,15 @@ class DrawingCanvas {
     this._prevY = 0;
     this._currX = 0;
     this._currY = 0;
+    this._isReady = false;
+    this._timer = null;
 
     this._resize();
 
-    this._canvas.addEventListener("mousedown", (event) => this._engage(event));
-    this._canvas.addEventListener("mousemove", (event) => this._drawXY(event)); // 그림 쪽에서는 putPoints
-    this._canvas.addEventListener("mouseup", (event) => this._disengage(event));
-    this._canvas.addEventListener("mouseout", (event) =>
-      this._disengage(event),
-    );
+    this._canvas.addEventListener("mousedown", this._engage.bind(this));
+    this._canvas.addEventListener("mousemove", this._drawXY.bind(this));
+    this._canvas.addEventListener("mouseup", this._disengage.bind(this));
+    this._canvas.addEventListener("mouseout", this._disengage.bind(this));
 
     window.addEventListener("resize", () => this._resize());
 
@@ -47,9 +49,16 @@ class DrawingCanvas {
     await this._worker.load();
     await this._worker.loadLanguage("kor");
     await this._worker.initialize("kor");
+
+    this._isReady = true;
   }
 
   _engage(event) {
+    if (this._drawingDone) {
+      this._shapes = [];
+      this._drawingDone = false;
+    }
+
     this._updateXY(event);
 
     this._isDrawing = true;
@@ -94,15 +103,14 @@ class DrawingCanvas {
   }
 
   async _disengage(event) {
-    this._isDrawing = false;
-
     if (!this._isDrawing && event.type === "mouseout") {
       return;
     }
 
+    this._isDrawing = false;
+
     if (stepStore.currentMode === MODE.PICTURE) {
       clearInterval(this._drawingInterval);
-      this._shapes.push(this._currentShape);
 
       (() => {
         if (this._timer) {
@@ -110,6 +118,14 @@ class DrawingCanvas {
         }
 
         this._timer = setTimeout(async () => {
+          if (this._isDrawing) {
+            return;
+          }
+
+          this._shapes.push(this._currentShape);
+
+          this._drawingDone = true;
+
           const data = await autodraw.getSuggestions(this._shapes);
           const results = autodraw.extractDataFromApi(data);
           const parsedSuggestions = autodraw.parseSuggestions(results);
@@ -117,6 +133,8 @@ class DrawingCanvas {
           suggestStore.setSuggestions(parsedSuggestions);
           suggestStore.setSuggestionUrl(parsedSuggestions[0].url);
           stepStore.updateStep(STEP.SUGGEST);
+
+          this._timer = null;
         }, 1500);
       })();
     } else {
@@ -126,10 +144,24 @@ class DrawingCanvas {
         }
 
         this._timer = setTimeout(async () => {
-          const {
-            data: { text },
-          } = await this._worker.recognize(this._canvas);
-        }, 1000);
+          if (this._isDrawing) {
+            return;
+          }
+
+          if (this._isReady) {
+            const {
+              data: { text },
+            } = await this._worker.recognize(this._canvas);
+
+            this._timer = null;
+
+            suggestStore.setText(text);
+            stepStore.updateStep(STEP.SUGGEST);
+
+            this._ctx.clearRect(0, 0, this._canvas.width, this._canvas.height);
+            ui.setBackgroundColorRandomly();
+          }
+        }, 1500);
       })();
     }
   }

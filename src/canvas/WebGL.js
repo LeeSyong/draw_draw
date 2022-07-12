@@ -1,13 +1,18 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import { FontLoader } from "three/examples/jsm/loaders/FontLoader";
+import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry";
 import { autorun } from "mobx";
 
 import stepStore from "../store/stepStore";
 import suggestStore from "../store/suggestStore";
 
 import { STEP } from "../constants/step";
+import { MODE } from "../constants/mode";
 
 import { ALPHAMAP } from "../constants/url";
+
+import FontJSON from "../../assets/Do Hyeon_Regular.json";
 
 class WebGLCanvas {
   constructor(canvas) {
@@ -19,11 +24,19 @@ class WebGLCanvas {
     this._mouseY = 0;
 
     autorun(async () => {
-      if (suggestStore.suggestionUrl === "") {
-        this._setupBackgroundModel();
+      if (stepStore.currentStep === STEP.SUGGEST) {
+        if (stepStore.currentMode === MODE.PICTURE) {
+          await this._setupSuggestionsModel();
+        } else {
+          this._setupTextModel();
+        }
       } else {
-        await this._setupSuggestionModel();
+        this._setupBackgroundModel();
       }
+    });
+
+    window.addEventListener("wheel", this._zoom.bind(this), {
+      passive: false,
     });
   }
 
@@ -65,7 +78,7 @@ class WebGLCanvas {
     this._init();
   }
 
-  async _setupSuggestionModel() {
+  async _setupSuggestionsModel() {
     const res = await fetch(suggestStore.suggestionUrl);
     const text = await res.text();
     const svg = new DOMParser()
@@ -122,6 +135,31 @@ class WebGLCanvas {
 
     this._suggestionGroup = new THREE.Group();
     this._suggestionGroup.add(this._suggestionPoints, this._backgroundGroup);
+
+    this._init();
+  }
+
+  _setupTextModel() {
+    const loader = new FontLoader();
+    const font = loader.parse(FontJSON);
+
+    const textGeometry = new TextGeometry(suggestStore.text, {
+      font,
+      size: 50,
+      height: 10,
+      curveSegments: 12,
+      bevelEnabled: true,
+      bevelThickness: 3,
+      bevelSize: 1,
+      bevelOffset: 0,
+      bevelSegments: 12,
+    });
+
+    const textMaterial = new THREE.MeshNormalMaterial();
+
+    this._textMesh = new THREE.Mesh(textGeometry, textMaterial);
+    this._textMesh.position.set(0, 0, -240);
+    this._textMesh.geometry.center();
 
     this._init();
   }
@@ -199,15 +237,40 @@ class WebGLCanvas {
 
     if (stepStore.currentStep === STEP.SUGGEST) {
       this.scene.remove(this._backgroundGroup);
-      this.scene.add(this._suggestionGroup);
+
+      if (stepStore.currentMode === MODE.PICTURE) {
+        this.scene.remove(this._textMesh);
+        this.scene.add(this._suggestionGroup);
+      } else {
+        this.scene.remove(this._suggestionGroup);
+        this.scene.add(this._textMesh);
+      }
     } else {
-      this.scene.remove(this._suggestionGroup);
+      this.scene.remove(this._suggestionGroup, this._textMesh);
       this.scene.add(this._backgroundGroup);
+    }
+
+    if (this._textMesh) {
+      const time = Date.now() * 0.003;
+      const rotationY = Math.sin(time * 0.5) * 0.3;
+
+      this._textMesh.rotation.y = rotationY;
     }
 
     this.renderer.render(this.scene, this.camera);
     this.control.update();
     window.requestAnimationFrame(this._tick.bind(this, sizes));
+  }
+
+  _mousemove(event) {
+    this._mouseX = event.clientX;
+    this._mouseY = event.clientY;
+
+    const ratioX = (this._mouseX / window.innerWidth - 0.5) * 2;
+    const ratioY = (this._mouseY / window.innerHeight - 0.5) * 2;
+
+    this._backgroundGroup.rotation.y = ratioX * Math.PI * 0.1;
+    this._backgroundGroup.rotation.x = ratioY * Math.PI * 0.1;
   }
 
   _resize() {
@@ -221,15 +284,16 @@ class WebGLCanvas {
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   }
 
-  _mousemove(event) {
-    this._mouseX = event.clientX;
-    this._mouseY = event.clientY;
+  _zoom(event) {
+    event.preventDefault();
 
-    const ratioX = (this._mouseX / window.innerWidth - 0.5) * 2;
-    const ratioY = (this._mouseY / window.innerHeight - 0.5) * 2;
+    let { zoom } = this.camera;
 
-    this._backgroundGroup.rotation.y = ratioX * Math.PI * 0.1;
-    this._backgroundGroup.rotation.x = ratioY * Math.PI * 0.1;
+    zoom += event.deltaY * -0.001;
+    zoom = Math.min(Math.max(0.7, zoom), 1.7);
+
+    this.camera.zoom = zoom;
+    this.camera.updateProjectionMatrix();
   }
 }
 
