@@ -134,7 +134,7 @@ class WebGLCanvas {
     this._suggestionPoints.position.z = -4500;
 
     this._suggestionGroup = new THREE.Group();
-    this._suggestionGroup.add(this._suggestionPoints, this._backgroundGroup);
+    this._suggestionGroup.add(this._suggestionPoints);
 
     this._init();
   }
