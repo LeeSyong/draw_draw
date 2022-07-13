@@ -1,3 +1,4 @@
+import translate from "translate";
 import axios from "axios";
 
 import { API } from "../constants/url";
@@ -44,20 +45,51 @@ const autodraw = (() => {
 
       return {
         name: result[0],
-        confidence: result[1],
         url: API.SVG_ENDPOINT + escapedName + "-01.svg",
-        url_variant_1: API.SVG_ENDPOINT + escapedName + "-02.svg",
-        url_variant_2: API.SVG_ENDPOINT + escapedName + "-03.svg",
       };
     });
 
     return parsedResults;
   };
 
+  const validateSuggestions = async (suggestions) => {
+    const validSuggestions = [];
+
+    for (let i = 0; i < suggestions.length; i++) {
+      const suggestion = suggestions[i];
+
+      try {
+        await axios(suggestion.url);
+
+        validSuggestions.push(suggestion);
+      } catch (error) {
+        continue;
+      }
+    }
+
+    return validSuggestions;
+  };
+
+  const translateSuggestions = async (suggestions) => {
+    const names = suggestions.map((suggestion) => suggestion.name).join(",");
+    const translatedNames = (await translate(names, "ko")).split(",");
+    const translatedSuggestions = suggestions.map((suggestion, index) => {
+      if (translatedNames[index] === "squiggle") {
+        translatedNames[index] = "구불구불한";
+      }
+
+      return { ...suggestion, name: translatedNames[index] };
+    });
+
+    return translatedSuggestions;
+  };
+
   return Object.freeze({
     getSuggestions,
     extractDataFromApi,
     parseSuggestions,
+    validateSuggestions,
+    translateSuggestions,
   });
 })();
 

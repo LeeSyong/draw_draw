@@ -129,13 +129,19 @@ class DrawingCanvas {
           const data = await autodraw.getSuggestions(this._shapes);
           const results = autodraw.extractDataFromApi(data);
           const parsedSuggestions = autodraw.parseSuggestions(results);
+          const validSuggestions = await autodraw.validateSuggestions(
+            parsedSuggestions,
+          );
+          const translatedSuggestions = await autodraw.translateSuggestions(
+            validSuggestions,
+          );
 
-          suggestStore.setSuggestions(parsedSuggestions);
-          suggestStore.setSuggestionUrl(parsedSuggestions[0].url);
+          suggestStore.setSuggestions(translatedSuggestions);
+          suggestStore.setSuggestionUrl(translatedSuggestions[0].url);
           stepStore.updateStep(STEP.SUGGEST);
 
           this._timer = null;
-        }, 1500);
+        }, 500);
       })();
     } else {
       (() => {
