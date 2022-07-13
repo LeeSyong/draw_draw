@@ -44,20 +44,36 @@ const autodraw = (() => {
 
       return {
         name: result[0],
-        confidence: result[1],
         url: API.SVG_ENDPOINT + escapedName + "-01.svg",
-        url_variant_1: API.SVG_ENDPOINT + escapedName + "-02.svg",
-        url_variant_2: API.SVG_ENDPOINT + escapedName + "-03.svg",
       };
     });
 
     return parsedResults;
   };
 
+  const validateSuggestions = async (suggestions) => {
+    const validSuggestions = [];
+
+    for (let i = 0; i < suggestions.length; i++) {
+      const suggestion = suggestions[i];
+
+      try {
+        await axios(suggestion.url);
+
+        validSuggestions.push(suggestion);
+      } catch (error) {
+        continue;
+      }
+    }
+
+    return validSuggestions;
+  };
+
   return Object.freeze({
     getSuggestions,
     extractDataFromApi,
     parseSuggestions,
+    validateSuggestions,
   });
 })();
 
