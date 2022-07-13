@@ -117,12 +117,6 @@ const ui = (() => {
       const suggestion = suggestions[i];
       const suggestionItem = document.createElement("li");
 
-      try {
-        await axios(suggestion.url);
-      } catch (error) {
-        continue;
-      }
-
       suggestionItem.textContent = suggestion.name;
       suggestionItem.classList.add("suggestion");
       suggestionList.appendChild(suggestionItem);
@@ -136,19 +130,17 @@ const ui = (() => {
     const suggestionItems = suggestionList.querySelectorAll(".suggestion");
 
     const handleSuggestionItemclick = (event) => {
-      suggestionItems.forEach((suggestionItem) => {
+      suggestionItems.forEach((suggestionItem, index) => {
+        if (event.target.textContent === suggestionItem.textContent) {
+          suggestStore.setSuggestionUrl(suggestions[index].url);
+
+          ui.setBackgroundColorRandomly();
+        }
+
         suggestionItem.classList.remove("selected");
       });
 
       event.target.classList.add("selected");
-
-      suggestions.forEach((suggestion) => {
-        if (suggestion.name === event.target.textContent) {
-          suggestStore.setSuggestionUrl(suggestion.url);
-
-          ui.setBackgroundColorRandomly();
-        }
-      });
     };
 
     suggestionItems.forEach((suggestionItem) => {
