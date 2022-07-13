@@ -14,6 +14,7 @@ import ui from "./utils/ui";
 
 import WebGLCanvas from "./canvas/WebGL";
 import DrawingCanvas from "./canvas/Drawing";
+import TextToSpeech from "./api/webSpeech";
 
 class App {
   constructor() {
@@ -46,6 +47,7 @@ class App {
     });
 
     this.webglSpace = new WebGLCanvas(this._webglCanvas);
+    this.textToSpeech = new TextToSpeech();
   }
 
   _loading() {
@@ -70,7 +72,16 @@ class App {
 
     this._showInfoIcon.addEventListener("click", () => {});
 
-    this._soundIcon.addEventListener("click", () => {});
+    this._soundIcon.addEventListener("click", () => {
+      this.textToSpeech._setting();
+
+      const target =
+        stepStore.currentMode === MODE.PICTURE
+          ? this._suggestionList.querySelector(".selected").textContent
+          : suggestStore.text;
+
+      this.textToSpeech._converting(target);
+    });
   }
 
   _starting() {
