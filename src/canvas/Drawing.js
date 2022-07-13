@@ -132,9 +132,12 @@ class DrawingCanvas {
           const validSuggestions = await autodraw.validateSuggestions(
             parsedSuggestions,
           );
+          const translatedSuggestions = await autodraw.translateSuggestions(
+            validSuggestions,
+          );
 
-          suggestStore.setSuggestions(validSuggestions);
-          suggestStore.setSuggestionUrl(validSuggestions[0].url);
+          suggestStore.setSuggestions(translatedSuggestions);
+          suggestStore.setSuggestionUrl(translatedSuggestions[0].url);
           stepStore.updateStep(STEP.SUGGEST);
 
           this._timer = null;

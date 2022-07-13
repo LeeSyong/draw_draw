@@ -1,3 +1,4 @@
+import translate from "translate";
 import axios from "axios";
 
 import { API } from "../constants/url";
@@ -69,11 +70,26 @@ const autodraw = (() => {
     return validSuggestions;
   };
 
+  const translateSuggestions = async (suggestions) => {
+    const names = suggestions.map((suggestion) => suggestion.name).join(",");
+    const translatedNames = (await translate(names, "ko")).split(",");
+    const translatedSuggestions = suggestions.map((suggestion, index) => {
+      if (translatedNames[index] === "squiggle") {
+        translatedNames[index] = "구불구불한";
+      }
+
+      return { ...suggestion, name: translatedNames[index] };
+    });
+
+    return translatedSuggestions;
+  };
+
   return Object.freeze({
     getSuggestions,
     extractDataFromApi,
     parseSuggestions,
     validateSuggestions,
+    translateSuggestions,
   });
 })();
 
