@@ -19,15 +19,19 @@ class DrawingCanvas {
     this._isDrawing = false;
     this._drawnAt = 0;
     this._drawingDone = false;
+    this._goToDrawing = false;
+
     this._highlightStartPoint = false;
     this._drawingInterval = null;
     this._intervalLastPosition = [-1, -1];
     this._currentShape = null;
     this._shapes = [];
+
     this._prevX = 0;
     this._prevY = 0;
     this._currX = 0;
     this._currY = 0;
+
     this._isReady = false;
     this._timer = null;
 
@@ -37,6 +41,7 @@ class DrawingCanvas {
     this._canvas.addEventListener("mousemove", this._drawXY.bind(this));
     this._canvas.addEventListener("mouseup", this._disengage.bind(this));
     this._canvas.addEventListener("mouseout", this._disengage.bind(this));
+    this._canvas.addEventListener("dblclick", this._goToDraw.bind(this));
 
     window.addEventListener("resize", () => this._resize());
 
@@ -54,6 +59,8 @@ class DrawingCanvas {
   }
 
   _engage(event) {
+    this._goToDrawing = false;
+
     if (this._drawingDone) {
       this._shapes = [];
       this._drawingDone = false;
@@ -109,6 +116,10 @@ class DrawingCanvas {
 
     this._isDrawing = false;
 
+    if (this._goToDrawing) {
+      return;
+    }
+
     if (stepStore.currentMode === MODE.PICTURE) {
       clearInterval(this._drawingInterval);
 
@@ -138,6 +149,7 @@ class DrawingCanvas {
 
           suggestStore.setSuggestions(translatedSuggestions);
           suggestStore.setSuggestionUrl(translatedSuggestions[0].url);
+
           stepStore.updateStep(STEP.SUGGEST);
 
           this._timer = null;
@@ -161,15 +173,32 @@ class DrawingCanvas {
 
             this._timer = null;
 
-            suggestStore.setText(text);
-            stepStore.updateStep(STEP.SUGGEST);
+            if (text) {
+              suggestStore.setText(text);
+              stepStore.updateStep(STEP.SUGGEST);
 
-            this._ctx.clearRect(0, 0, this._canvas.width, this._canvas.height);
-            ui.setBackgroundColorRandomly();
+              this._ctx.clearRect(
+                0,
+                0,
+                this._canvas.width,
+                this._canvas.height,
+              );
+              ui.setBackgroundColorRandomly();
+            }
           }
         }, 1500);
       })();
     }
+  }
+
+  _goToDraw() {
+    this._goToDrawing = true;
+
+    if (stepStore.currentStep !== STEP.SUGGEST && !this._isDrawing) {
+      return;
+    }
+
+    stepStore.updateStep(STEP.START);
   }
 
   _updateXY(event) {
