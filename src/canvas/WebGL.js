@@ -25,6 +25,10 @@ class WebGLCanvas {
     this._mouseX = 0;
     this._mouseY = 0;
 
+    this._vertexShader = document.querySelector("#vertex-shader").textContent;
+    this._fragmentShader =
+      document.querySelector("#fragment-shader").textContent;
+
     autorun(async () => {
       if (stepStore.currentStep === STEP.SUGGEST) {
         if (stepStore.currentMode === MODE.PICTURE) {
@@ -161,15 +165,44 @@ class WebGLCanvas {
             r: color[0] / 255,
             g: color[1] / 255,
             b: color[2] / 255,
-            duration: "random(0.5, 2)",
+            duration: "random(0.5, 1.5)",
             ease: "power2.out",
           },
           delay * 0.0012,
         );
 
-        sizes.push(Math.random() * 30 * this.renderer.getPixelRatio());
+        sizes.push(25 * this.renderer.getPixelRatio());
       }
     });
+
+    this._geometry = new THREE.BufferGeometry().setFromPoints(this._vertices);
+
+    this._geometry.setAttribute(
+      "color",
+      new THREE.Float32BufferAttribute(colors, 3),
+    );
+    this._geometry.setAttribute(
+      "size",
+      new THREE.Float32BufferAttribute(sizes, 1),
+    );
+
+    const material = new THREE.ShaderMaterial({
+      uniforms: {
+        pointTexture: {
+          value: new THREE.TextureLoader().load(ALPHAMAP.CIRCLE),
+        },
+      },
+      vertexShader: this._vertexShader,
+      fragmentShader: this._fragmentShader,
+      transparent: true,
+      depthTest: false,
+    });
+
+    this._suggestionPoints = new THREE.Points(this._geometry, material);
+    this._suggestionPoints.scale.set(0.09, 0.09, 0.09);
+
+    this._suggestionGroup = new THREE.Group();
+    this._suggestionGroup.add(this._suggestionPoints);
 
     this._init();
   }
@@ -275,13 +308,29 @@ class WebGLCanvas {
 
       if (stepStore.currentMode === MODE.PICTURE) {
         this.scene.remove(this._textMesh);
-        this.scene.add(this._suggestionGroup);
+
+        if (this._suggestionGroup) {
+          this.camera.position.z = 400;
+
+          this.scene.add(this._suggestionGroup);
+
+          this._geometry.setFromPoints(this._vertices);
+
+          const colours = [];
+          this._vertices.forEach((vector) => {
+            colours.push(vector.r, vector.g, vector.b);
+          });
+          this._geometry.setAttribute(
+            "customColor",
+            new THREE.Float32BufferAttribute(colours, 3),
+          );
+        }
       } else {
         this.scene.remove(this._suggestionGroup);
         this.scene.add(this._textMesh);
       }
     } else {
-      this.scene.remove(this._suggestionGroup, this._textMesh);
+      this.scene.remove(this._suggestionGroup);
       this.scene.add(this._backgroundGroup);
     }
 
