@@ -1,5 +1,3 @@
-import axios from "axios";
-
 import stepStore from "../store/stepStore";
 import suggestStore from "../store/suggestStore";
 
@@ -120,7 +118,6 @@ const ui = (() => {
       suggestionItem.textContent = suggestion.name;
       suggestionItem.classList.add("suggestion");
       suggestionList.appendChild(suggestionItem);
-      suggestionList.visibility = "visible";
 
       if (i === 0) {
         suggestionItem.classList.add("selected");

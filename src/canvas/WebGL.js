@@ -2,6 +2,8 @@ import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { FontLoader } from "three/examples/jsm/loaders/FontLoader";
 import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry";
+import chroma from "chroma-js";
+import gsap from "gsap";
 import { autorun } from "mobx";
 
 import stepStore from "../store/stepStore";
@@ -22,6 +24,10 @@ class WebGLCanvas {
     this._distance = 2;
     this._mouseX = 0;
     this._mouseY = 0;
+
+    this._vertexShader = document.querySelector("#vertex-shader").textContent;
+    this._fragmentShader =
+      document.querySelector("#fragment-shader").textContent;
 
     autorun(async () => {
       if (stepStore.currentStep === STEP.SUGGEST) {
@@ -92,46 +98,108 @@ class WebGLCanvas {
     const paths = svg.querySelectorAll("path");
     svg.remove();
 
-    const vertices = [];
+    this._vertices = [];
+    const colors = [];
+    const sizes = [];
+    const delay = 1;
+    const gradient = chroma.scale([
+      "ef476f",
+      "ffd166",
+      "06d6a0",
+      "118ab2",
+      "073b4c",
+    ]);
+    const colorRGB = {
+      r: Math.random() * 100,
+      g: Math.random() * 100,
+      b: Math.random() * 100,
+    };
+    const positionXYZ = {
+      x: Math.random() * 3000,
+      y: Math.random() * 3000,
+      z: Math.random() * 3000,
+    };
+
+    const timeline = gsap.timeline({
+      onReverseComplete: () => {
+        timeline.timeScale(1);
+        timeline.play(0);
+      },
+    });
 
     paths.forEach((path) => {
       const length = path.getTotalLength();
 
       for (let i = 0; i < length; i += 30) {
-        const point = path.getPointAtLength(i);
-        const vector = new THREE.Vector3(point.x, -point.y, 0);
+        const pointLength = i;
+        const point = path.getPointAtLength(pointLength);
 
-        vector.x += (Math.random() - 0.5) * 30;
-        vector.y += (Math.random() - 0.5) * 30;
-        vector.z += (Math.random() - 0.5) * 70;
+        const vector = new THREE.Vector3(
+          point.x - svgViewBoxWidth / 2,
+          -point.y + svgViewBoxHeight / 2,
+          (Math.random() - 0.5) * 15,
+        );
 
-        vertices.push(vector);
+        const start = new THREE.Vector3(
+          vector.x + (Math.random() - 0.5) * positionXYZ.x,
+          vector.y + (Math.random() - 0.5) * positionXYZ.y,
+          vector.z + (Math.random() - 0.5) * positionXYZ.z,
+        );
+
+        const coloursX =
+          point.x / svgViewBoxWidth + (Math.random() - 0.5) * 0.2;
+        const color = gradient(coloursX).rgb();
+
+        this._vertices.push(vector);
+
+        vector.r = 1 - (vector.z + 7.5) / colorRGB.r;
+        vector.g = 1 - (vector.z + 7.5) / colorRGB.g;
+        vector.b = 1 - (vector.z + 7.5) / colorRGB.b;
+
+        timeline.from(
+          vector,
+          {
+            x: start.x,
+            y: start.y,
+            z: start.z,
+            r: color[0] / 255,
+            g: color[1] / 255,
+            b: color[2] / 255,
+            duration: "random(0.5, 1.5)",
+            ease: "power2.out",
+          },
+          delay * 0.0012,
+        );
+
+        sizes.push(25 * this.renderer.getPixelRatio());
       }
     });
 
-    const textureLoader = new THREE.TextureLoader();
-    const alphaMap = textureLoader.load(ALPHAMAP.CIRCLE);
+    this._geometry = new THREE.BufferGeometry().setFromPoints(this._vertices);
 
-    const colors = new Float32Array(this._count * 3).map((color) =>
-      Math.random(),
+    this._geometry.setAttribute(
+      "color",
+      new THREE.Float32BufferAttribute(colors, 3),
+    );
+    this._geometry.setAttribute(
+      "size",
+      new THREE.Float32BufferAttribute(sizes, 1),
     );
 
-    const geometry = new THREE.BufferGeometry().setFromPoints(vertices);
-    geometry.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
-
-    const material = new THREE.PointsMaterial({
-      size: 150,
-      alphaMap,
-      alphaTest: 0.01,
-      vertexColors: true,
+    const material = new THREE.ShaderMaterial({
+      uniforms: {
+        pointTexture: {
+          value: new THREE.TextureLoader().load(ALPHAMAP.CIRCLE),
+        },
+      },
+      vertexShader: this._vertexShader,
+      fragmentShader: this._fragmentShader,
       transparent: true,
+      depthTest: false,
     });
 
-    this._suggestionPoints = new THREE.Points(geometry, material);
-
-    this._suggestionPoints.position.x -= svgViewBoxWidth / 2;
-    this._suggestionPoints.position.y += svgViewBoxHeight / 2;
-    this._suggestionPoints.position.z = -4500;
+    this._suggestionPoints = new THREE.Points(this._geometry, material);
+    this._suggestionPoints.scale.set(0.09, 0.09, 0.09);
 
     this._suggestionGroup = new THREE.Group();
     this._suggestionGroup.add(this._suggestionPoints);
@@ -182,7 +250,7 @@ class WebGLCanvas {
     this._tick(this._sizes);
 
     window.addEventListener("resize", () => this._resize());
-    window.addEventListener("mousemove", (event) => this._mousemove(event));
+    window.addEventListener("mousemove", this._mousemove.bind(this));
   }
 
   _setupLight() {
@@ -240,13 +308,29 @@ class WebGLCanvas {
 
       if (stepStore.currentMode === MODE.PICTURE) {
         this.scene.remove(this._textMesh);
-        this.scene.add(this._suggestionGroup);
+
+        if (this._suggestionGroup) {
+          this.camera.position.z = 400;
+
+          this.scene.add(this._suggestionGroup);
+
+          this._geometry.setFromPoints(this._vertices);
+
+          const colours = [];
+          this._vertices.forEach((vector) => {
+            colours.push(vector.r, vector.g, vector.b);
+          });
+          this._geometry.setAttribute(
+            "customColor",
+            new THREE.Float32BufferAttribute(colours, 3),
+          );
+        }
       } else {
         this.scene.remove(this._suggestionGroup);
         this.scene.add(this._textMesh);
       }
     } else {
-      this.scene.remove(this._suggestionGroup, this._textMesh);
+      this.scene.remove(this._suggestionGroup);
       this.scene.add(this._backgroundGroup);
     }
 
@@ -263,14 +347,28 @@ class WebGLCanvas {
   }
 
   _mousemove(event) {
-    this._mouseX = event.clientX;
-    this._mouseY = event.clientY;
+    if (stepStore.currentStep === STEP.SUGGEST) {
+      const mouseX =
+        (event.clientX - window.innerWidth / 2) / (window.innerWidth / 2);
+      const mouseY =
+        (event.clientY - window.innerHeight / 2) / (window.innerHeight / 2);
 
-    const ratioX = (this._mouseX / window.innerWidth - 0.5) * 2;
-    const ratioY = (this._mouseY / window.innerHeight - 0.5) * 2;
+      gsap.to(this._suggestionGroup.rotation, {
+        x: mouseY * 0.5,
+        y: mouseX * 0.5,
+        ease: "power2.out",
+        duration: 2,
+      });
+    } else {
+      this._mouseX = event.clientX;
+      this._mouseY = event.clientY;
 
-    this._backgroundGroup.rotation.y = ratioX * Math.PI * 0.1;
-    this._backgroundGroup.rotation.x = ratioY * Math.PI * 0.1;
+      const ratioX = (this._mouseX / window.innerWidth - 0.5) * 2;
+      const ratioY = (this._mouseY / window.innerHeight - 0.5) * 2;
+
+      this._backgroundGroup.rotation.y = ratioX * Math.PI * 0.1;
+      this._backgroundGroup.rotation.x = ratioY * Math.PI * 0.1;
+    }
   }
 
   _resize() {
