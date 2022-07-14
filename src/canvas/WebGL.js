@@ -347,14 +347,28 @@ class WebGLCanvas {
   }
 
   _mousemove(event) {
-    this._mouseX = event.clientX;
-    this._mouseY = event.clientY;
+    if (stepStore.currentStep === STEP.SUGGEST) {
+      const mouseX =
+        (event.clientX - window.innerWidth / 2) / (window.innerWidth / 2);
+      const mouseY =
+        (event.clientY - window.innerHeight / 2) / (window.innerHeight / 2);
 
-    const ratioX = (this._mouseX / window.innerWidth - 0.5) * 2;
-    const ratioY = (this._mouseY / window.innerHeight - 0.5) * 2;
+      gsap.to(this._suggestionGroup.rotation, {
+        x: mouseY * 0.5,
+        y: mouseX * 0.5,
+        ease: "power2.out",
+        duration: 2,
+      });
+    } else {
+      this._mouseX = event.clientX;
+      this._mouseY = event.clientY;
 
-    this._backgroundGroup.rotation.y = ratioX * Math.PI * 0.1;
-    this._backgroundGroup.rotation.x = ratioY * Math.PI * 0.1;
+      const ratioX = (this._mouseX / window.innerWidth - 0.5) * 2;
+      const ratioY = (this._mouseY / window.innerHeight - 0.5) * 2;
+
+      this._backgroundGroup.rotation.y = ratioX * Math.PI * 0.1;
+      this._backgroundGroup.rotation.x = ratioY * Math.PI * 0.1;
+    }
   }
 
   _resize() {
