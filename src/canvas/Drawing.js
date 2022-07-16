@@ -4,8 +4,9 @@ import suggestStore from "../store/suggestStore";
 import autodraw from "../api/autodraw";
 import vision from "../api/vision";
 
-import { STEP } from "../constants/step";
 import { MODE } from "../constants/mode";
+import { STEP } from "../constants/step";
+import { TEXT } from "../constants/text";
 
 import draw from "../utils/draw";
 import ui from "../utils/ui";
@@ -176,8 +177,9 @@ class DrawingCanvas {
             suggestStore.setText(recognizedText);
             stepStore.updateStep(STEP.SUGGEST);
 
-            this._ctx.clearRect(0, 0, this._canvas.width, this._canvas.height);
             ui.setBackgroundColorRandomly();
+          } else {
+            ui.addText(TEXT.DRAW_LETTER_ERROR);
           }
 
           this._timer = null;
