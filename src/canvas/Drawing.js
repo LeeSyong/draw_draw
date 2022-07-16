@@ -1,5 +1,3 @@
-import { createWorker } from "tesseract.js";
-
 import stepStore from "../store/stepStore";
 import suggestStore from "../store/suggestStore";
 
@@ -7,18 +5,20 @@ import { STEP } from "../constants/step";
 import { MODE } from "../constants/mode";
 
 import ui from "../utils/ui";
-
 import draw from "../utils/draw";
+
 import autodraw from "../api/autodraw";
+import vision from "../api/vision";
 
 class DrawingCanvas {
   constructor(canvas) {
     this._canvas = canvas;
     this._ctx = this._canvas.getContext("2d");
 
-    this._isDrawing = false;
+    this._startDrawing = false;
     this._drawnAt = 0;
-    this._drawingDone = false;
+    this._isDrawing = false;
+    this._finishDrawing = false;
     this._goToDrawing = false;
 
     this._highlightStartPoint = false;
@@ -44,31 +44,19 @@ class DrawingCanvas {
     this._canvas.addEventListener("dblclick", this._goToDraw.bind(this));
 
     window.addEventListener("resize", () => this._resize());
-
-    this.initWorker();
-  }
-
-  async initWorker() {
-    this._worker = createWorker();
-
-    await this._worker.load();
-    await this._worker.loadLanguage("kor");
-    await this._worker.initialize("kor");
-
-    this._isReady = true;
   }
 
   _engage(event) {
     this._goToDrawing = false;
 
-    if (this._drawingDone) {
+    if (this._finishDrawing) {
       this._shapes = [];
-      this._drawingDone = false;
+      this._finishDrawing = false;
     }
 
     this._updateXY(event);
 
-    this._isDrawing = true;
+    this._startDrawing = true;
     this._drawnAt = Date.now();
     this._highlightStartPoint = true;
 
@@ -85,9 +73,11 @@ class DrawingCanvas {
   }
 
   _drawXY(event) {
-    if (!this._isDrawing) {
+    if (!this._startDrawing) {
       return;
     }
+
+    this._isDrawing = true;
 
     if (stepStore.currentMode === MODE.PICTURE) {
       this._drawingInterval = setInterval(
@@ -110,15 +100,17 @@ class DrawingCanvas {
   }
 
   async _disengage(event) {
-    if (!this._isDrawing && event.type === "mouseout") {
+    if (!this._startDrawing && event.type === "mouseout") {
+      return;
+    }
+
+    this._startDrawing = false;
+
+    if (!this._isDrawing) {
       return;
     }
 
     this._isDrawing = false;
-
-    if (this._goToDrawing) {
-      return;
-    }
 
     if (stepStore.currentMode === MODE.PICTURE) {
       clearInterval(this._drawingInterval);
@@ -129,13 +121,13 @@ class DrawingCanvas {
         }
 
         this._timer = setTimeout(async () => {
-          if (this._isDrawing) {
+          if (this._startDrawing) {
             return;
           }
 
           this._shapes.push(this._currentShape);
 
-          this._drawingDone = true;
+          this._finishDrawing = true;
 
           const data = await autodraw.getSuggestions(this._shapes);
           const results = autodraw.extractDataFromApi(data);
@@ -162,30 +154,21 @@ class DrawingCanvas {
         }
 
         this._timer = setTimeout(async () => {
-          if (this._isDrawing) {
+          if (this._startDrawing) {
             return;
           }
 
-          if (this._isReady) {
-            const {
-              data: { text },
-            } = await this._worker.recognize(this._canvas);
+          const recognizedText = await vision.recognize(this._canvas);
 
-            this._timer = null;
+          if (recognizedText) {
+            suggestStore.setText(recognizedText);
+            stepStore.updateStep(STEP.SUGGEST);
 
-            if (text) {
-              suggestStore.setText(text);
-              stepStore.updateStep(STEP.SUGGEST);
-
-              this._ctx.clearRect(
-                0,
-                0,
-                this._canvas.width,
-                this._canvas.height,
-              );
-              ui.setBackgroundColorRandomly();
-            }
+            this._ctx.clearRect(0, 0, this._canvas.width, this._canvas.height);
+            ui.setBackgroundColorRandomly();
           }
+
+          this._timer = null;
         }, 1500);
       })();
     }
@@ -194,7 +177,7 @@ class DrawingCanvas {
   _goToDraw() {
     this._goToDrawing = true;
 
-    if (stepStore.currentStep !== STEP.SUGGEST && !this._isDrawing) {
+    if (stepStore.currentStep !== STEP.SUGGEST && !this._startDrawing) {
       return;
     }
 

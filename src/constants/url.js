@@ -14,6 +14,7 @@ const API = {
     "https://inputtools.google.com/request?ime=handwriting&app=autodraw&dbg=1&cs=1&oe=UTF-8",
   SVG_ENDPOINT:
     "https://storage.googleapis.com/artlab-public.appspot.com/stencils/selman/",
+  TEXT_ENDPOINT: "https://vision.googleapis.com/v1/images:annotate",
 };
 
 export { ICON, ALPHAMAP, API };

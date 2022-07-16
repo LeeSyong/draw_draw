@@ -299,10 +299,6 @@ class WebGLCanvas {
   }
 
   _tick(sizes) {
-    const elapsedTime = this._clock.getElapsedTime();
-
-    this._backgroundPoints.rotation.y = elapsedTime * 0.3;
-
     if (stepStore.currentStep === STEP.SUGGEST) {
       this.scene.remove(this._backgroundGroup);
 
@@ -330,15 +326,11 @@ class WebGLCanvas {
         this.scene.add(this._textMesh);
       }
     } else {
+      const elapsedTime = this._clock.getElapsedTime();
+      this._backgroundPoints.rotation.y = elapsedTime * 0.3;
+
       this.scene.remove(this._suggestionGroup);
       this.scene.add(this._backgroundGroup);
-    }
-
-    if (this._textMesh) {
-      const time = Date.now() * 0.003;
-      const rotationY = Math.sin(time * 0.5) * 0.3;
-
-      this._textMesh.rotation.y = rotationY;
     }
 
     this.renderer.render(this.scene, this.camera);
@@ -348,12 +340,17 @@ class WebGLCanvas {
 
   _mousemove(event) {
     if (stepStore.currentStep === STEP.SUGGEST) {
+      const mesh =
+        stepStore.currentMode === MODE.PICTURE
+          ? this._suggestionGroup
+          : this._textMesh;
+
       const mouseX =
         (event.clientX - window.innerWidth / 2) / (window.innerWidth / 2);
       const mouseY =
         (event.clientY - window.innerHeight / 2) / (window.innerHeight / 2);
 
-      gsap.to(this._suggestionGroup.rotation, {
+      gsap.to(mesh.rotation, {
         x: mouseY * 0.5,
         y: mouseX * 0.5,
         ease: "power2.out",
