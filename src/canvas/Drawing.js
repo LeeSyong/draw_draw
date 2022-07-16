@@ -16,6 +16,7 @@ class DrawingCanvas {
   constructor(canvas) {
     this._canvas = canvas;
     this._ctx = this._canvas.getContext("2d");
+    this._icons = document.querySelectorAll(".icon-wrapper");
 
     this._startDrawing = false;
     this._drawnAt = 0;
@@ -47,6 +48,8 @@ class DrawingCanvas {
   }
 
   _engage(event) {
+    this._icons.forEach((icon) => icon.classList.add("can-draw"));
+
     this._goToDrawing = false;
 
     if (this._finishDrawing) {
@@ -104,6 +107,8 @@ class DrawingCanvas {
   }
 
   async _disengage(event) {
+    this._icons.forEach((icon) => icon.classList.remove("can-draw"));
+
     if (!this._startDrawing && event.type === "mouseout") {
       return;
     }
