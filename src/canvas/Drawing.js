@@ -1,14 +1,14 @@
 import stepStore from "../store/stepStore";
 import suggestStore from "../store/suggestStore";
 
+import autodraw from "../api/autodraw";
+import vision from "../api/vision";
+
 import { STEP } from "../constants/step";
 import { MODE } from "../constants/mode";
 
-import ui from "../utils/ui";
 import draw from "../utils/draw";
-
-import autodraw from "../api/autodraw";
-import vision from "../api/vision";
+import ui from "../utils/ui";
 
 class DrawingCanvas {
   constructor(canvas) {
@@ -20,6 +20,7 @@ class DrawingCanvas {
     this._isDrawing = false;
     this._finishDrawing = false;
     this._goToDrawing = false;
+    this._processiong = false;
 
     this._highlightStartPoint = false;
     this._drawingInterval = null;
@@ -52,6 +53,10 @@ class DrawingCanvas {
     if (this._finishDrawing) {
       this._shapes = [];
       this._finishDrawing = false;
+    }
+
+    if (this._processiong) {
+      return;
     }
 
     this._updateXY(event);
@@ -129,6 +134,8 @@ class DrawingCanvas {
 
           this._finishDrawing = true;
 
+          this._processiong = true;
+
           const data = await autodraw.getSuggestions(this._shapes);
           const results = autodraw.extractDataFromApi(data);
           const parsedSuggestions = autodraw.parseSuggestions(results);
@@ -139,9 +146,10 @@ class DrawingCanvas {
             validSuggestions,
           );
 
+          this._processiong = false;
+
           suggestStore.setSuggestions(translatedSuggestions);
           suggestStore.setSuggestionUrl(translatedSuggestions[0].url);
-
           stepStore.updateStep(STEP.SUGGEST);
 
           this._timer = null;
@@ -158,7 +166,11 @@ class DrawingCanvas {
             return;
           }
 
+          this._processiong = true;
+
           const recognizedText = await vision.recognize(this._canvas);
+
+          this._processiong = false;
 
           if (recognizedText) {
             suggestStore.setText(recognizedText);
