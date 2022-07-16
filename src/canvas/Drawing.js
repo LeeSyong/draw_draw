@@ -149,6 +149,10 @@ class DrawingCanvas {
 
           this._processiong = false;
 
+          if (stepStore.currentMode === MODE.LETTER) {
+            return;
+          }
+
           suggestStore.setSuggestions(translatedSuggestions);
           suggestStore.setSuggestionUrl(translatedSuggestions[0].url);
           stepStore.updateStep(STEP.SUGGEST);
@@ -172,6 +176,12 @@ class DrawingCanvas {
           const recognizedText = await vision.recognize(this._canvas);
 
           this._processiong = false;
+
+          this._ctx.clearRect(0, 0, this._canvas.width, this._canvas.height);
+
+          if (stepStore.currentMode === MODE.PICTURE) {
+            return;
+          }
 
           if (recognizedText) {
             suggestStore.setText(recognizedText);
