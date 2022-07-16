@@ -5,7 +5,6 @@ const path = require("path");
 
 module.exports = merge(commonConfiguration, {
   mode: "development",
-  watch: true,
   devtool: "source-map",
   devServer: {
     static: {

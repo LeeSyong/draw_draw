@@ -15,6 +15,7 @@
     "@babel/preset-env": "^7.18.6",
     "babel-loader": "^8.2.5",
     "clean-webpack-plugin": "^4.0.0",
+    "copy-webpack-plugin": "^11.0.0",
     "css-loader": "^6.7.1",
     "dotenv-webpack": "^7.1.1",
     "eslint": "^8.19.0",
@@ -41,7 +42,11 @@
   "license": "ISC",
   "homepage": "https://github.com/LeeSyong/draw_draw#readme",
   "dependencies": {
+    "axios": "^0.27.2",
+    "chroma-js": "^2.4.2",
+    "gsap": "^3.10.4",
     "mobx": "^6.6.1",
-    "three": "^0.142.0"
+    "three": "^0.142.0",
+    "translate": "^1.4.1"
   }
 }

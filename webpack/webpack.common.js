@@ -1,3 +1,4 @@
+const CopyWebpackPlugin = require("copy-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const Dotenv = require("dotenv-webpack");
@@ -14,6 +15,14 @@ module.exports = {
     extensions: [".js", ".json", ".css", ".scss"],
   },
   plugins: [
+    new CopyWebpackPlugin({
+      patterns: [
+        {
+          from: path.resolve(__dirname, "../assets"),
+          to: path.resolve(__dirname, "../dist/assets"),
+        },
+      ],
+    }),
     new HtmlWebpackPlugin({
       template: path.resolve(__dirname, "../src/index.html"),
       meta: {
@@ -57,6 +66,13 @@ module.exports = {
             },
           },
         ],
+      },
+      {
+        test: /\.svg$/,
+        type: "asset/resource",
+        generator: {
+          filename: "svg/[name][ext]",
+        },
       },
     ],
   },

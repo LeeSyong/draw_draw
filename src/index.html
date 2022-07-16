@@ -6,5 +6,67 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>드로우! Draw!</title>
   </head>
-  <body></body>
+  <body>
+    <canvas id="webgl-canvas"></canvas>
+    <canvas id="drawing-canvas"></canvas>
+
+    <div class="icon-wrapper change-mode-wrapper">
+      <img
+        class="icon-img change-mode hide"
+        src="../assets/change_letter_mode.svg"
+        alt="change-mode"
+      />
+    </div>
+    <div class="icon-wrapper change-lang-wrapper">
+      <img
+        class="icon-img change-lang hide"
+        src="../assets/change_lang.svg"
+        alt="change-lang"
+      />
+    </div>
+    <div class="icon-wrapper show-info-wrapper">
+      <img
+        class="icon-img show-info hide"
+        src="../assets/info.svg"
+        alt="show-info"
+      />
+    </div>
+    <div class="icon-wrapper sound-wrapper">
+      <img class="icon-img sound hide" src="../assets/sound.svg" alt="sound" />
+    </div>
+
+    <div class="info-wrapper"></div>
+
+    <div class="suggestions">
+      <ul></ul>
+    </div>
+
+    <script type="x-shader/x-vertex" id="vertex-shader">
+      attribute float size;
+      attribute vec3 customColor;
+      varying vec3 vColor;
+
+      void main() {
+        vColor = customColor;
+        vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+        gl_PointSize = size * ( 300.0 / -mvPosition.z );
+        gl_Position = projectionMatrix * mvPosition;
+      }
+    </script>
+
+    <script type="x-shader/x-fragment" id="fragment-shader">
+      uniform vec3 color;
+
+      varying vec3 vColor;
+      varying float vOpacity;
+
+      void main() {
+        float strength = distance(gl_PointCoord, vec2(0.5));
+        if (strength > 0.4) discard;
+        strength = step(0.4, strength);
+        strength = 1.0 - strength;
+        gl_FragColor = vec4(vColor * strength, strength);
+      }
+    </script>
+  </body>
 </html>
