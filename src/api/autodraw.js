@@ -2,9 +2,12 @@ import translate from "translate";
 import axios from "axios";
 
 import { API } from "../constants/url";
+import { TEXT } from "../constants/text";
+
+import ui from "../utils/ui";
 
 const autodraw = (() => {
-  const getSuggestions = async (shapes) => {
+  const getSuggestions = async (shapes, canvas) => {
     try {
       const response = await axios.post(API.SUGGESTIONS_ENDPOINT, {
         input_type: 0,
@@ -24,7 +27,8 @@ const autodraw = (() => {
 
       return data;
     } catch (error) {
-      alert(error);
+      canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
+      ui.addText(TEXT.DRAW_PICTURE_ERROR);
     }
   };
 

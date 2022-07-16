@@ -36,11 +36,6 @@ const vision = (() => {
 
       const text = result.data.responses[0].fullTextAnnotation?.text;
 
-      if (!text) {
-        canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
-        ui.addText(TEXT.DRAW_LETTER_ERROR);
-      }
-
       return text;
     } catch (error) {
       canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);

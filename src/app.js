@@ -5,16 +5,17 @@ import { autorun, toJS } from "mobx";
 import stepStore from "./store/stepStore";
 import suggestStore from "./store/suggestStore";
 
-import { STEP } from "./constants/step";
+import TextToSpeech from "./api/webSpeech";
+
 import { ICON } from "./constants/url";
-import { TEXT } from "./constants/text";
 import { MODE } from "./constants/mode";
+import { STEP } from "./constants/step";
+import { TEXT } from "./constants/text";
 
 import ui from "./utils/ui";
 
 import WebGLCanvas from "./canvas/WebGL";
 import DrawingCanvas from "./canvas/Drawing";
-import TextToSpeech from "./api/webSpeech";
 
 class App {
   constructor() {

@@ -32,21 +32,12 @@ body {
   height: 100%;
 }
 
-/* icon svg */
 .icon-wrapper {
   position: absolute;
   z-index: 30;
   display: inline-block;
-  .icon-img {
-    &.hide {
-      visibility: hidden;
-      cursor: none;
-    }
-    &.show {
-      visibility: visible;
-      cursor: pointer;
-      transition: all 200ms ease-in;
-    }
+  &.can-draw {
+    z-index: 0;
   }
   &.change-mode-wrapper {
     position: absolute;
@@ -74,6 +65,17 @@ body {
     left: 96%;
     transform: translate(-50%, -50%);
   }
+  .icon-img {
+    &.hide {
+      visibility: hidden;
+      cursor: none;
+    }
+    &.show {
+      visibility: visible;
+      cursor: pointer;
+      transition: all 200ms ease-in;
+    }
+  }
 }
 
 .filter-black {
@@ -84,13 +86,11 @@ body {
   filter: $icon-filter-white;
 }
 
-/* info text */
 .info-wrapper {
   font-size: 20px;
   font-weight: bold;
   .info-text {
     position: absolute;
-    z-index: 30;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);

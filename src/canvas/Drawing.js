@@ -1,25 +1,29 @@
 import stepStore from "../store/stepStore";
 import suggestStore from "../store/suggestStore";
 
-import { STEP } from "../constants/step";
-import { MODE } from "../constants/mode";
-
-import ui from "../utils/ui";
-import draw from "../utils/draw";
-
 import autodraw from "../api/autodraw";
 import vision from "../api/vision";
+
+import { MODE } from "../constants/mode";
+import { STEP } from "../constants/step";
+import { TEXT } from "../constants/text";
+
+import eventController from "../utils/eventController";
+import draw from "../utils/draw";
+import ui from "../utils/ui";
 
 class DrawingCanvas {
   constructor(canvas) {
     this._canvas = canvas;
     this._ctx = this._canvas.getContext("2d");
+    this._icons = document.querySelectorAll(".icon-wrapper");
 
     this._startDrawing = false;
     this._drawnAt = 0;
     this._isDrawing = false;
     this._finishDrawing = false;
     this._goToDrawing = false;
+    this._processiong = false;
 
     this._highlightStartPoint = false;
     this._drawingInterval = null;
@@ -31,9 +35,6 @@ class DrawingCanvas {
     this._prevY = 0;
     this._currX = 0;
     this._currY = 0;
-
-    this._isReady = false;
-    this._timer = null;
 
     this._resize();
 
@@ -47,11 +48,17 @@ class DrawingCanvas {
   }
 
   _engage(event) {
+    this._icons.forEach((icon) => icon.classList.add("can-draw"));
+
     this._goToDrawing = false;
 
     if (this._finishDrawing) {
       this._shapes = [];
       this._finishDrawing = false;
+    }
+
+    if (this._processiong) {
+      return;
     }
 
     this._updateXY(event);
@@ -100,6 +107,8 @@ class DrawingCanvas {
   }
 
   async _disengage(event) {
+    this._icons.forEach((icon) => icon.classList.remove("can-draw"));
+
     if (!this._startDrawing && event.type === "mouseout") {
       return;
     }
@@ -115,62 +124,64 @@ class DrawingCanvas {
     if (stepStore.currentMode === MODE.PICTURE) {
       clearInterval(this._drawingInterval);
 
-      (() => {
-        if (this._timer) {
-          clearTimeout(this._timer);
+      eventController.debounce(async () => {
+        if (this._startDrawing) {
+          return;
         }
 
-        this._timer = setTimeout(async () => {
-          if (this._startDrawing) {
-            return;
-          }
+        this._shapes.push(this._currentShape);
 
-          this._shapes.push(this._currentShape);
+        this._finishDrawing = true;
 
-          this._finishDrawing = true;
+        this._processiong = true;
 
-          const data = await autodraw.getSuggestions(this._shapes);
-          const results = autodraw.extractDataFromApi(data);
-          const parsedSuggestions = autodraw.parseSuggestions(results);
-          const validSuggestions = await autodraw.validateSuggestions(
-            parsedSuggestions,
-          );
-          const translatedSuggestions = await autodraw.translateSuggestions(
-            validSuggestions,
-          );
+        const data = await autodraw.getSuggestions(this._shapes, this._canvas);
+        const results = autodraw.extractDataFromApi(data);
+        const parsedSuggestions = autodraw.parseSuggestions(results);
+        const validSuggestions = await autodraw.validateSuggestions(
+          parsedSuggestions,
+        );
+        const translatedSuggestions = await autodraw.translateSuggestions(
+          validSuggestions,
+        );
 
-          suggestStore.setSuggestions(translatedSuggestions);
-          suggestStore.setSuggestionUrl(translatedSuggestions[0].url);
+        this._processiong = false;
 
+        if (stepStore.currentMode === MODE.LETTER) {
+          return;
+        }
+
+        suggestStore.setSuggestions(translatedSuggestions);
+        suggestStore.setSuggestionUrl(translatedSuggestions[0].url);
+        stepStore.updateStep(STEP.SUGGEST);
+      }, 1000);
+    } else {
+      eventController.debounce(async () => {
+        if (this._startDrawing) {
+          return;
+        }
+
+        this._processiong = true;
+
+        const recognizedText = await vision.recognize(this._canvas);
+
+        this._processiong = false;
+
+        this._ctx.clearRect(0, 0, this._canvas.width, this._canvas.height);
+
+        if (stepStore.currentMode === MODE.PICTURE) {
+          return;
+        }
+
+        if (recognizedText) {
+          suggestStore.setText(recognizedText);
           stepStore.updateStep(STEP.SUGGEST);
 
-          this._timer = null;
-        }, 500);
-      })();
-    } else {
-      (() => {
-        if (this._timer) {
-          clearTimeout(this._timer);
+          ui.setBackgroundColorRandomly();
+        } else {
+          ui.addText(TEXT.DRAW_LETTER_ERROR);
         }
-
-        this._timer = setTimeout(async () => {
-          if (this._startDrawing) {
-            return;
-          }
-
-          const recognizedText = await vision.recognize(this._canvas);
-
-          if (recognizedText) {
-            suggestStore.setText(recognizedText);
-            stepStore.updateStep(STEP.SUGGEST);
-
-            this._ctx.clearRect(0, 0, this._canvas.width, this._canvas.height);
-            ui.setBackgroundColorRandomly();
-          }
-
-          this._timer = null;
-        }, 1500);
-      })();
+      }, 1000);
     }
   }
 
