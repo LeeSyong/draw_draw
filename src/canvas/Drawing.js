@@ -15,9 +15,10 @@ class DrawingCanvas {
     this._canvas = canvas;
     this._ctx = this._canvas.getContext("2d");
 
-    this._isDrawing = false;
+    this._startDrawing = false;
     this._drawnAt = 0;
-    this._drawingDone = false;
+    this._isDrawing = false;
+    this._finishDrawing = false;
     this._goToDrawing = false;
 
     this._highlightStartPoint = false;
@@ -48,14 +49,14 @@ class DrawingCanvas {
   _engage(event) {
     this._goToDrawing = false;
 
-    if (this._drawingDone) {
+    if (this._finishDrawing) {
       this._shapes = [];
-      this._drawingDone = false;
+      this._finishDrawing = false;
     }
 
     this._updateXY(event);
 
-    this._isDrawing = true;
+    this._startDrawing = true;
     this._drawnAt = Date.now();
     this._highlightStartPoint = true;
 
@@ -72,9 +73,11 @@ class DrawingCanvas {
   }
 
   _drawXY(event) {
-    if (!this._isDrawing) {
+    if (!this._startDrawing) {
       return;
     }
+
+    this._isDrawing = true;
 
     if (stepStore.currentMode === MODE.PICTURE) {
       this._drawingInterval = setInterval(
@@ -97,15 +100,17 @@ class DrawingCanvas {
   }
 
   async _disengage(event) {
-    if (!this._isDrawing && event.type === "mouseout") {
+    if (!this._startDrawing && event.type === "mouseout") {
+      return;
+    }
+
+    this._startDrawing = false;
+
+    if (!this._isDrawing) {
       return;
     }
 
     this._isDrawing = false;
-
-    if (this._goToDrawing) {
-      return;
-    }
 
     if (stepStore.currentMode === MODE.PICTURE) {
       clearInterval(this._drawingInterval);
@@ -116,13 +121,13 @@ class DrawingCanvas {
         }
 
         this._timer = setTimeout(async () => {
-          if (this._isDrawing) {
+          if (this._startDrawing) {
             return;
           }
 
           this._shapes.push(this._currentShape);
 
-          this._drawingDone = true;
+          this._finishDrawing = true;
 
           const data = await autodraw.getSuggestions(this._shapes);
           const results = autodraw.extractDataFromApi(data);
@@ -149,7 +154,7 @@ class DrawingCanvas {
         }
 
         this._timer = setTimeout(async () => {
-          if (this._isDrawing) {
+          if (this._startDrawing) {
             return;
           }
 
@@ -172,7 +177,7 @@ class DrawingCanvas {
   _goToDraw() {
     this._goToDrawing = true;
 
-    if (stepStore.currentStep !== STEP.SUGGEST && !this._isDrawing) {
+    if (stepStore.currentStep !== STEP.SUGGEST && !this._startDrawing) {
       return;
     }
 
