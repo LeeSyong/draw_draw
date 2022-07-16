@@ -8,6 +8,7 @@ import { MODE } from "../constants/mode";
 import { STEP } from "../constants/step";
 import { TEXT } from "../constants/text";
 
+import eventController from "../utils/eventController";
 import draw from "../utils/draw";
 import ui from "../utils/ui";
 
@@ -33,9 +34,6 @@ class DrawingCanvas {
     this._prevY = 0;
     this._currX = 0;
     this._currY = 0;
-
-    this._isReady = false;
-    this._timer = null;
 
     this._resize();
 
@@ -121,80 +119,64 @@ class DrawingCanvas {
     if (stepStore.currentMode === MODE.PICTURE) {
       clearInterval(this._drawingInterval);
 
-      (() => {
-        if (this._timer) {
-          clearTimeout(this._timer);
+      eventController.debounce(async () => {
+        if (this._startDrawing) {
+          return;
         }
 
-        this._timer = setTimeout(async () => {
-          if (this._startDrawing) {
-            return;
-          }
+        this._shapes.push(this._currentShape);
 
-          this._shapes.push(this._currentShape);
+        this._finishDrawing = true;
 
-          this._finishDrawing = true;
+        this._processiong = true;
 
-          this._processiong = true;
+        const data = await autodraw.getSuggestions(this._shapes, this._canvas);
+        const results = autodraw.extractDataFromApi(data);
+        const parsedSuggestions = autodraw.parseSuggestions(results);
+        const validSuggestions = await autodraw.validateSuggestions(
+          parsedSuggestions,
+        );
+        const translatedSuggestions = await autodraw.translateSuggestions(
+          validSuggestions,
+        );
 
-          const data = await autodraw.getSuggestions(this._shapes);
-          const results = autodraw.extractDataFromApi(data);
-          const parsedSuggestions = autodraw.parseSuggestions(results);
-          const validSuggestions = await autodraw.validateSuggestions(
-            parsedSuggestions,
-          );
-          const translatedSuggestions = await autodraw.translateSuggestions(
-            validSuggestions,
-          );
+        this._processiong = false;
 
-          this._processiong = false;
+        if (stepStore.currentMode === MODE.LETTER) {
+          return;
+        }
 
-          if (stepStore.currentMode === MODE.LETTER) {
-            return;
-          }
+        suggestStore.setSuggestions(translatedSuggestions);
+        suggestStore.setSuggestionUrl(translatedSuggestions[0].url);
+        stepStore.updateStep(STEP.SUGGEST);
+      }, 1000);
+    } else {
+      eventController.debounce(async () => {
+        if (this._startDrawing) {
+          return;
+        }
 
-          suggestStore.setSuggestions(translatedSuggestions);
-          suggestStore.setSuggestionUrl(translatedSuggestions[0].url);
+        this._processiong = true;
+
+        const recognizedText = await vision.recognize(this._canvas);
+
+        this._processiong = false;
+
+        this._ctx.clearRect(0, 0, this._canvas.width, this._canvas.height);
+
+        if (stepStore.currentMode === MODE.PICTURE) {
+          return;
+        }
+
+        if (recognizedText) {
+          suggestStore.setText(recognizedText);
           stepStore.updateStep(STEP.SUGGEST);
 
-          this._timer = null;
-        }, 500);
-      })();
-    } else {
-      (() => {
-        if (this._timer) {
-          clearTimeout(this._timer);
+          ui.setBackgroundColorRandomly();
+        } else {
+          ui.addText(TEXT.DRAW_LETTER_ERROR);
         }
-
-        this._timer = setTimeout(async () => {
-          if (this._startDrawing) {
-            return;
-          }
-
-          this._processiong = true;
-
-          const recognizedText = await vision.recognize(this._canvas);
-
-          this._processiong = false;
-
-          this._ctx.clearRect(0, 0, this._canvas.width, this._canvas.height);
-
-          if (stepStore.currentMode === MODE.PICTURE) {
-            return;
-          }
-
-          if (recognizedText) {
-            suggestStore.setText(recognizedText);
-            stepStore.updateStep(STEP.SUGGEST);
-
-            ui.setBackgroundColorRandomly();
-          } else {
-            ui.addText(TEXT.DRAW_LETTER_ERROR);
-          }
-
-          this._timer = null;
-        }, 1500);
-      })();
+      }, 1000);
     }
   }
 
