@@ -1,5 +1,3 @@
-import { createWorker } from "tesseract.js";
-
 import stepStore from "../store/stepStore";
 import suggestStore from "../store/suggestStore";
 
@@ -7,9 +5,10 @@ import { STEP } from "../constants/step";
 import { MODE } from "../constants/mode";
 
 import ui from "../utils/ui";
-
 import draw from "../utils/draw";
+
 import autodraw from "../api/autodraw";
+import vision from "../api/vision";
 
 class DrawingCanvas {
   constructor(canvas) {
@@ -44,18 +43,6 @@ class DrawingCanvas {
     this._canvas.addEventListener("dblclick", this._goToDraw.bind(this));
 
     window.addEventListener("resize", () => this._resize());
-
-    this.initWorker();
-  }
-
-  async initWorker() {
-    this._worker = createWorker();
-
-    await this._worker.load();
-    await this._worker.loadLanguage("kor");
-    await this._worker.initialize("kor");
-
-    this._isReady = true;
   }
 
   _engage(event) {
@@ -166,26 +153,17 @@ class DrawingCanvas {
             return;
           }
 
-          if (this._isReady) {
-            const {
-              data: { text },
-            } = await this._worker.recognize(this._canvas);
+          const recognizedText = await vision.recognize(this._canvas);
 
-            this._timer = null;
+          if (recognizedText) {
+            suggestStore.setText(recognizedText);
+            stepStore.updateStep(STEP.SUGGEST);
 
-            if (text) {
-              suggestStore.setText(text);
-              stepStore.updateStep(STEP.SUGGEST);
-
-              this._ctx.clearRect(
-                0,
-                0,
-                this._canvas.width,
-                this._canvas.height,
-              );
-              ui.setBackgroundColorRandomly();
-            }
+            this._ctx.clearRect(0, 0, this._canvas.width, this._canvas.height);
+            ui.setBackgroundColorRandomly();
           }
+
+          this._timer = null;
         }, 1500);
       })();
     }
