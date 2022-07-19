@@ -20,6 +20,9 @@ module.exports = {
         {
           from: path.resolve(__dirname, "../assets"),
           to: path.resolve(__dirname, "../dist/assets"),
+          globOptions: {
+            ignore: ["**/**.svg", "**/**.ttf"],
+          },
         },
       ],
     }),
@@ -68,10 +71,10 @@ module.exports = {
         ],
       },
       {
-        test: /\.svg$/,
+        test: /\.ttf$/,
         type: "asset/resource",
         generator: {
-          filename: "svg/[name][ext]",
+          filename: "assets/fonts/[name][ext]",
         },
       },
     ],
