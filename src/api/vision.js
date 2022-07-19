@@ -43,7 +43,27 @@ const vision = (() => {
     }
   };
 
-  return Object.freeze({ recognize });
+  const validate = (text) => {
+    const regExp = /[{}[\]/;:|)*`^\-_+<>@%$\\=('"]/g;
+
+    if (!text || regExp.test(text)) {
+      ui.addText(TEXT.DRAW_LETTER_ERROR);
+
+      return;
+    }
+
+    const finalText = text.split("").map((char) => {
+      if (char === "\n") {
+        return " ";
+      }
+
+      return char;
+    });
+
+    return finalText.join("");
+  };
+
+  return Object.freeze({ recognize, validate });
 })();
 
 export default vision;

@@ -154,7 +154,7 @@ class DrawingCanvas {
         suggestStore.setSuggestions(translatedSuggestions);
         suggestStore.setSuggestionUrl(translatedSuggestions[0].url);
         stepStore.updateStep(STEP.SUGGEST);
-      }, 1000);
+      }, 500);
     } else {
       eventController.debounce(async () => {
         if (this._startDrawing) {
@@ -173,14 +173,12 @@ class DrawingCanvas {
           return;
         }
 
-        if (recognizedText) {
-          suggestStore.setText(recognizedText);
-          stepStore.updateStep(STEP.SUGGEST);
+        const finalText = vision.validate(recognizedText);
 
-          ui.setBackgroundColorRandomly();
-        } else {
-          ui.addText(TEXT.DRAW_LETTER_ERROR);
-        }
+        suggestStore.setText(finalText);
+        stepStore.updateStep(STEP.SUGGEST);
+
+        ui.setBackgroundColorRandomly();
       }, 1000);
     }
   }
