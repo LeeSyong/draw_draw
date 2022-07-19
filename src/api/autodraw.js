@@ -58,18 +58,23 @@ const autodraw = (() => {
 
   const validateSuggestions = async (suggestions) => {
     const validSuggestions = [];
+    let results = [];
 
-    for (let i = 0; i < suggestions.length; i++) {
-      const suggestion = suggestions[i];
-
-      try {
-        await axios(suggestion.url);
-
-        validSuggestions.push(suggestion);
-      } catch (error) {
-        continue;
-      }
+    try {
+      results = await Promise.allSettled(
+        suggestions.map((suggestion) => axios.head(suggestion.url)),
+      );
+    } catch (error) {
+      return;
     }
+
+    results.forEach((result, index) => {
+      if (!result.value) {
+        return;
+      }
+
+      validSuggestions.push(suggestions[index]);
+    });
 
     return validSuggestions;
   };

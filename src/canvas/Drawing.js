@@ -141,6 +141,14 @@ class DrawingCanvas {
         const validSuggestions = await autodraw.validateSuggestions(
           parsedSuggestions,
         );
+
+        if (!validSuggestions) {
+          this._ctx.clearRect(0, 0, this._canvas.width, this._canvas.height);
+          ui.addText(TEXT.DRAW_PICTURE_ERROR);
+
+          return;
+        }
+
         const translatedSuggestions = await autodraw.translateSuggestions(
           validSuggestions,
         );
