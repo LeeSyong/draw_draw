@@ -21,10 +21,6 @@ class WebGLCanvas {
     this._count = 4000;
     this._distance = 2;
 
-    this._vertexShader = document.querySelector("#vertex-shader").textContent;
-    this._fragmentShader =
-      document.querySelector("#fragment-shader").textContent;
-
     autorun(async () => {
       if (stepStore.currentStep === STEP.SUGGEST) {
         if (suggestStore.text === "") {
@@ -120,7 +116,7 @@ class WebGLCanvas {
 
     this._tick(this._sizes);
 
-    window.addEventListener("resize", () => this._resize());
+    window.addEventListener("resize", this._resize.bind(this));
     window.addEventListener("mousemove", this._mousemove.bind(this));
   }
 
@@ -227,7 +223,7 @@ class WebGLCanvas {
       const mouseY =
         (event.clientY - window.innerHeight / 2) / (window.innerHeight / 2);
 
-      gsap.to(mesh.rotation, {
+      gsap.to(mesh?.rotation, {
         x: mouseY * 0.5,
         y: mouseX * 0.5,
         ease: "power2.out",
