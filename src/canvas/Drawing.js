@@ -20,10 +20,9 @@ class DrawingCanvas {
 
     this._startDrawing = false;
     this._drawnAt = 0;
-    this._isDrawing = false;
     this._finishDrawing = false;
-    this._goToDrawing = false;
     this._processiong = false;
+    this._changeStepToStart = false;
 
     this._highlightStartPoint = false;
     this._drawingInterval = null;
@@ -42,23 +41,34 @@ class DrawingCanvas {
     this._canvas.addEventListener("mousemove", this._drawXY.bind(this));
     this._canvas.addEventListener("mouseup", this._disengage.bind(this));
     this._canvas.addEventListener("mouseout", this._disengage.bind(this));
-    this._canvas.addEventListener("dblclick", this._goToDraw.bind(this));
 
     window.addEventListener("resize", () => this._resize());
   }
 
   _engage(event) {
-    this._icons.forEach((icon) => icon.classList.add("can-draw"));
+    if (event.detail === 2) {
+      if (stepStore.currentStep === STEP.SUGGEST) {
+        this._ctx.clearRect(0, 0, this._canvas.width, this._canvas.height);
 
-    this._goToDrawing = false;
+        stepStore.updateStep(STEP.START);
 
-    if (this._finishDrawing) {
-      this._shapes = [];
-      this._finishDrawing = false;
+        this._changeStepToStart = true;
+
+        return;
+      }
     }
 
     if (this._processiong) {
       return;
+    }
+
+    this._icons.forEach((icon) => icon.classList.add("can-draw"));
+
+    this._changeStepToStart = false;
+
+    if (this._finishDrawing) {
+      this._shapes = [];
+      this._finishDrawing = false;
     }
 
     this._updateXY(event);
@@ -67,7 +77,11 @@ class DrawingCanvas {
     this._drawnAt = Date.now();
     this._highlightStartPoint = true;
 
-    this._currentShape = [[], [], []];
+    if (stepStore.currentMode === MODE.PICTURE) {
+      this._currentShape = [[], [], []];
+
+      this._drawingInterval = setInterval(this._drawingShape.bind(this), 9);
+    }
 
     draw.drawStartPoint(
       this._ctx,
@@ -84,15 +98,6 @@ class DrawingCanvas {
       return;
     }
 
-    this._isDrawing = true;
-
-    if (stepStore.currentMode === MODE.PICTURE) {
-      this._drawingInterval = setInterval(
-        this._drawingShape(this._intervalLastPosition),
-        9,
-      );
-    }
-
     this._updateXY(event);
     this._resize();
 
@@ -107,6 +112,10 @@ class DrawingCanvas {
   }
 
   async _disengage(event) {
+    if (this._processiong) {
+      return;
+    }
+
     this._icons.forEach((icon) => icon.classList.remove("can-draw"));
 
     if (!this._startDrawing && event.type === "mouseout") {
@@ -115,32 +124,43 @@ class DrawingCanvas {
 
     this._startDrawing = false;
 
-    if (!this._isDrawing) {
-      return;
-    }
-
-    this._isDrawing = false;
-
     if (stepStore.currentMode === MODE.PICTURE) {
       clearInterval(this._drawingInterval);
+
+      this._shapes.push(this._currentShape);
 
       eventController.debounce(async () => {
         if (this._startDrawing) {
           return;
         }
 
-        this._shapes.push(this._currentShape);
-
         this._finishDrawing = true;
-
         this._processiong = true;
 
         const data = await autodraw.getSuggestions(this._shapes, this._canvas);
-        const results = autodraw.extractDataFromApi(data);
+        const results = autodraw.extractListData(data);
+
+        if (!results) {
+          this._processiong = false;
+
+          this._ctx.clearRect(0, 0, this._canvas.width, this._canvas.height);
+
+          return;
+        }
+
         const parsedSuggestions = autodraw.parseSuggestions(results);
         const validSuggestions = await autodraw.validateSuggestions(
           parsedSuggestions,
         );
+
+        if (!validSuggestions) {
+          this._processiong = false;
+
+          this._ctx.clearRect(0, 0, this._canvas.width, this._canvas.height);
+
+          return;
+        }
+
         const translatedSuggestions = await autodraw.translateSuggestions(
           validSuggestions,
         );
@@ -151,9 +171,11 @@ class DrawingCanvas {
           return;
         }
 
-        suggestStore.setSuggestions(translatedSuggestions);
-        suggestStore.setSuggestionUrl(translatedSuggestions[0].url);
-        stepStore.updateStep(STEP.SUGGEST);
+        if (!this._changeStepToStart) {
+          suggestStore.setSuggestions(translatedSuggestions);
+          suggestStore.setSuggestionUrl(translatedSuggestions[0].url);
+          stepStore.updateStep(STEP.SUGGEST);
+        }
       }, 500);
     } else {
       eventController.debounce(async () => {
@@ -164,33 +186,36 @@ class DrawingCanvas {
         this._processiong = true;
 
         const recognizedText = await vision.recognize(this._canvas);
+        const finalText = vision.validate(recognizedText);
+
+        if (!finalText) {
+          this._processiong = false;
+
+          this._ctx.clearRect(0, 0, this._canvas.width, this._canvas.height);
+
+          if (!this._changeStepToStart) {
+            ui.addText(TEXT.DRAW_LETTER_ERROR);
+          }
+
+          return;
+        }
 
         this._processiong = false;
-
-        this._ctx.clearRect(0, 0, this._canvas.width, this._canvas.height);
 
         if (stepStore.currentMode === MODE.PICTURE) {
           return;
         }
 
-        const finalText = vision.validate(recognizedText);
+        this._ctx.clearRect(0, 0, this._canvas.width, this._canvas.height);
 
-        suggestStore.setText(finalText);
-        stepStore.updateStep(STEP.SUGGEST);
+        if (!this._changeStepToStart) {
+          suggestStore.setText(finalText);
+          stepStore.updateStep(STEP.SUGGEST);
 
-        ui.setBackgroundColorRandomly();
+          ui.setBackgroundColorRandomly();
+        }
       }, 1000);
     }
-  }
-
-  _goToDraw() {
-    this._goToDrawing = true;
-
-    if (stepStore.currentStep !== STEP.SUGGEST && !this._startDrawing) {
-      return;
-    }
-
-    stepStore.updateStep(STEP.START);
   }
 
   _updateXY(event) {
@@ -200,10 +225,10 @@ class DrawingCanvas {
     this._currY = event.clientY - this._canvas.offsetTop;
   }
 
-  _drawingShape(intervalLastPosition) {
+  _drawingShape() {
     if (
-      intervalLastPosition[0] === this._prevX &&
-      intervalLastPosition[1] === this._prevY
+      this._intervalLastPosition[0] === this._prevX &&
+      this._intervalLastPosition[1] === this._prevY
     ) {
       return;
     }

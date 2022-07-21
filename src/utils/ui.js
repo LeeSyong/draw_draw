@@ -4,7 +4,7 @@ import suggestStore from "../store/suggestStore";
 import { MODE } from "../constants/mode";
 
 const ui = (() => {
-  const showIcon = (iconClass, mode) => {
+  const showIcon = (iconClass) => {
     const icon = document.querySelector(`.${iconClass}`);
 
     icon.classList.remove("hide");
@@ -127,8 +127,16 @@ const ui = (() => {
     const suggestionItems = suggestionList.querySelectorAll(".suggestion");
 
     const handleSuggestionItemclick = (event) => {
+      const prevSelectedItem = suggestionList.querySelector(".selected");
+
       suggestionItems.forEach((suggestionItem, index) => {
-        if (event.target.textContent === suggestionItem.textContent) {
+        const currSelectedItem = event.target;
+
+        if (currSelectedItem.textContent === prevSelectedItem.textContent) {
+          return;
+        }
+
+        if (currSelectedItem.textContent === suggestionItem.textContent) {
           suggestStore.setSuggestionUrl(suggestions[index].url);
 
           ui.setBackgroundColorRandomly();

@@ -12,18 +12,17 @@ import { ALPHAMAP } from "../constants/url";
 
 import svgConverter from "../utils/svgCreator";
 
+import BackgroundModel from "./Models/BackgroundModel";
 import SuggestionModel from "./Models/SuggestionModel";
 
 class WebGLCanvas {
   constructor(canvas) {
     this._canvas = canvas;
     this._clock = new THREE.Clock();
-    this._count = 4000;
-    this._distance = 2;
+    this.scene = new THREE.Scene();
 
-    this._vertexShader = document.querySelector("#vertex-shader").textContent;
-    this._fragmentShader =
-      document.querySelector("#fragment-shader").textContent;
+    const textureLoader = new THREE.TextureLoader();
+    this.alphaMap = textureLoader.load(ALPHAMAP.CIRCLE);
 
     autorun(async () => {
       if (stepStore.currentStep === STEP.SUGGEST) {
@@ -40,47 +39,24 @@ class WebGLCanvas {
     window.addEventListener("wheel", this._zoom.bind(this), {
       passive: false,
     });
-  }
-
-  _setupBackgroundModel() {
-    const textureLoader = new THREE.TextureLoader();
-    const alphaMap = textureLoader.load(ALPHAMAP.CIRCLE);
-
-    const points = new Float32Array(this._count * 3);
-    const colors = new Float32Array(this._count * 3);
-
-    for (let i = 0; i < points.length; i++) {
-      points[i] = THREE.MathUtils.randFloatSpread(this._distance * 2);
-      colors[i] = Math.random();
-    }
-
-    const pointGeometry = new THREE.BufferGeometry();
-    pointGeometry.setAttribute(
-      "position",
-      new THREE.Float32BufferAttribute(points, 3),
-    );
-    pointGeometry.setAttribute(
-      "color",
-      new THREE.Float32BufferAttribute(colors, 3),
-    );
-
-    const pointMaterial = new THREE.PointsMaterial({
-      size: 0.05,
-      alphaMap,
-      alphaTest: 0.01,
-      vertexColors: true,
-      transparent: true,
-    });
-
-    this._backgroundPoints = new THREE.Points(pointGeometry, pointMaterial);
-
-    this._backgroundGroup = new THREE.Group();
-    this._backgroundGroup.add(this._backgroundPoints);
 
     this._init();
   }
 
+  _setupBackgroundModel() {
+    this._removeObject(this._backgroundModel);
+    this._removeObject(this._pictureModel);
+    this._removeObject(this._letterModel);
+
+    this._backgroundModel = new BackgroundModel(this.alphaMap);
+
+    this.scene.add(this._backgroundModel.group);
+  }
+
   async _setupPictureModel() {
+    this._removeObject(this._backgroundModel);
+    this._removeObject(this._pictureModel);
+
     const svg = await svgConverter.createSvgImg(suggestStore.suggestionUrl);
     const circles = svg.querySelectorAll("circle");
     const ratio = this.renderer.getPixelRatio();
@@ -91,21 +67,22 @@ class WebGLCanvas {
 
     this._pictureModel = new SuggestionModel(svg, this.scene, ratio);
 
-    this._init();
+    this.scene.add(this._pictureModel.group);
   }
 
   async _setupLetterModel() {
+    this._removeObject(this._backgroundModel);
+    this._removeObject(this._letterModel);
+
     const svg = await svgConverter.createSvgText(suggestStore.text);
     const ratio = this.renderer.getPixelRatio();
 
     this._letterModel = new SuggestionModel(svg, this.scene, ratio);
 
-    this._init();
+    this.scene.add(this._letterModel.group);
   }
 
   _init() {
-    this.scene = new THREE.Scene();
-
     this._sizes = {
       width: window.innerWidth,
       height: window.innerHeight,
@@ -116,11 +93,9 @@ class WebGLCanvas {
     this._setupControls(this.camera, this._canvas);
     this._render(this._canvas, this._sizes);
 
-    this.scene.add(this._backgroundGroup);
-
     this._tick(this._sizes);
 
-    window.addEventListener("resize", () => this._resize());
+    window.addEventListener("resize", this._resize.bind(this));
     window.addEventListener("mousemove", this._mousemove.bind(this));
   }
 
@@ -141,7 +116,7 @@ class WebGLCanvas {
       5000,
     );
 
-    camera.position.set(0, 0, 2);
+    camera.position.z = 2;
 
     this.scene.add(camera);
     this.camera = camera;
@@ -171,43 +146,35 @@ class WebGLCanvas {
 
   _tick(sizes) {
     if (stepStore.currentStep === STEP.SUGGEST) {
-      this.scene.remove(this._backgroundGroup);
-
-      const modelToRemove =
-        stepStore.currentMode === MODE.PICTURE
-          ? this._letterModel
-          : this._pictureModel;
-
       const modelToAdd =
         stepStore.currentMode === MODE.PICTURE
           ? this._pictureModel
           : this._letterModel;
 
-      this.scene.remove(modelToRemove?.group);
-
       if (modelToAdd?.group) {
         this.camera.position.z = 400;
-
-        this.scene.add(modelToAdd.group);
 
         modelToAdd.geometry.setFromPoints(modelToAdd.vertices);
 
         const colours = [];
+
         modelToAdd.vertices.forEach((vector) => {
           colours.push(vector.r, vector.g, vector.b);
         });
+
         modelToAdd.geometry.setAttribute(
           "customColor",
           new THREE.Float32BufferAttribute(colours, 3),
         );
       }
     } else {
-      const elapsedTime = this._clock.getElapsedTime();
-      this._backgroundPoints.rotation.y = elapsedTime * 0.3;
+      this.camera.position.z = 2;
 
-      this.scene.remove(this._pictureModel?.group);
-      this.scene.remove(this._letterModel?.group);
-      this.scene.add(this._backgroundGroup);
+      const elapsedTime = this._clock.getElapsedTime();
+
+      this._backgroundModel.points.rotation.y = elapsedTime * 0.2;
+
+      this.scene.add(this._backgroundModel.group);
     }
 
     this.renderer.render(this.scene, this.camera);
@@ -227,12 +194,14 @@ class WebGLCanvas {
       const mouseY =
         (event.clientY - window.innerHeight / 2) / (window.innerHeight / 2);
 
-      gsap.to(mesh.rotation, {
-        x: mouseY * 0.5,
-        y: mouseX * 0.5,
-        ease: "power2.out",
-        duration: 2,
-      });
+      if (mesh) {
+        gsap.to(mesh.rotation, {
+          x: mouseY * 0.5,
+          y: mouseX * 0.5,
+          ease: "power2.out",
+          duration: 2,
+        });
+      }
     } else {
       const mouseX = event.clientX;
       const mouseY = event.clientY;
@@ -240,8 +209,8 @@ class WebGLCanvas {
       const ratioX = (mouseX / window.innerWidth - 0.5) * 2;
       const ratioY = (mouseY / window.innerHeight - 0.5) * 2;
 
-      this._backgroundGroup.rotation.y = ratioX * Math.PI * 0.1;
-      this._backgroundGroup.rotation.x = ratioY * Math.PI * 0.1;
+      this._backgroundModel.group.rotation.y = ratioX * Math.PI * 0.1;
+      this._backgroundModel.group.rotation.x = ratioY * Math.PI * 0.1;
     }
   }
 
@@ -266,6 +235,39 @@ class WebGLCanvas {
 
     this.camera.zoom = zoom;
     this.camera.updateProjectionMatrix();
+  }
+
+  _removeObject(obj) {
+    while (obj?.group?.children?.length > 0) {
+      this._removeObject(obj.group.children[0]);
+
+      obj.group.remove(obj.group.children[0]);
+
+      this.scene.remove(obj.group);
+
+      obj = null;
+    }
+
+    if (obj?.geometry) {
+      obj.geometry.dispose();
+    }
+
+    if (obj?.material) {
+      Object.keys(obj.material).forEach((prop) => {
+        if (!obj.material[prop]) {
+          return;
+        }
+
+        if (
+          obj.material[prop] &&
+          typeof obj.material[prop].dispose === "function"
+        ) {
+          obj.material[prop].dispose();
+        }
+      });
+
+      obj.material.dispose();
+    }
   }
 }
 

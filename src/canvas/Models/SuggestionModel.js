@@ -5,7 +5,6 @@ import gsap from "gsap";
 import stepStore from "../../store/stepStore";
 
 import { MODE } from "../../constants/mode";
-import { ALPHAMAP } from "../../constants/url";
 
 class SuggestionModel {
   constructor(svg, scene, ratio) {
@@ -39,11 +38,6 @@ class SuggestionModel {
       document.querySelector("#fragment-shader").textContent;
 
     this._material = new THREE.ShaderMaterial({
-      uniforms: {
-        pointTexture: {
-          value: new THREE.TextureLoader().load(ALPHAMAP.CIRCLE),
-        },
-      },
       vertexShader,
       fragmentShader,
       transparent: true,
@@ -123,7 +117,7 @@ class SuggestionModel {
             r: color[0] / 255,
             g: color[1] / 255,
             b: color[2] / 255,
-            duration: "random(0.5, 2)",
+            duration: "random(1, 1.5)",
             ease: "power2.out",
           },
           delay * 0.0012,
@@ -148,8 +142,6 @@ class SuggestionModel {
   }
 
   _createPoints() {
-    this._createGeometry(this._colors, this._sizes);
-
     const points = new THREE.Points(this.geometry, this._material);
     const pointSize = stepStore.currentMode === MODE.PICTURE ? 0.09 : 0.08;
 
