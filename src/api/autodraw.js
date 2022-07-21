@@ -32,28 +32,33 @@ const autodraw = (() => {
     }
   };
 
-  const extractDataFromApi = (data) => {
-    if (!data) {
+  const extractListData = (data) => {
+    const regex = /SCORESINKS: (.*) Service_Recognize:/;
+
+    if (!data[1][0]) {
       return;
     }
 
-    const regex = /SCORESINKS: (.*) Service_Recognize:/;
-    const results = JSON.parse(data[1][0][3].debug_info.match(regex)[1]);
+    if (!data[1][0][3].debug_info.match(regex)) {
+      return;
+    }
 
-    return results;
+    const suggestions = JSON.parse(data[1][0][3].debug_info.match(regex)[1]);
+
+    return suggestions;
   };
 
-  const parseSuggestions = (results) => {
-    const parsedResults = results.map((result) => {
-      const escapedName = result[0].replace(/ /g, "-");
+  const parseSuggestions = (suggestions) => {
+    const parsedSuggestions = suggestions.map((suggestion) => {
+      const escapedName = suggestion[0].replace(/ /g, "-");
 
       return {
-        name: result[0],
+        name: suggestion[0],
         url: API.SVG_ENDPOINT + escapedName + "-01.svg",
       };
     });
 
-    return parsedResults;
+    return parsedSuggestions;
   };
 
   const validateSuggestions = async (suggestions) => {
@@ -95,7 +100,7 @@ const autodraw = (() => {
 
   return Object.freeze({
     getSuggestions,
-    extractDataFromApi,
+    extractListData,
     parseSuggestions,
     validateSuggestions,
     translateSuggestions,
