@@ -24,6 +24,9 @@ const vision = (() => {
                   maxResults: 1,
                 },
               ],
+              imageContext: {
+                languageHints: ["ko"],
+              },
             },
           ],
         },
@@ -44,11 +47,14 @@ const vision = (() => {
   };
 
   const validate = (text) => {
-    const regExp = /[{}[\]/;:|)*`^\-_+<>@%$\\=('"]/g;
+    const specialSymbolRegExp = /[{}[\]/;:|)*`^\-_+<>♡☆Ĉ@%$\\=('"]/g;
+    const latinAlphabetRegExp = /[a-z|A-Z]/g;
 
-    if (!text || regExp.test(text)) {
-      ui.addText(TEXT.DRAW_LETTER_ERROR);
-
+    if (
+      !text ||
+      specialSymbolRegExp.test(text) ||
+      latinAlphabetRegExp.test(text)
+    ) {
       return;
     }
 
