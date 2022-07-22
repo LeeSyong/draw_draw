@@ -45,17 +45,15 @@ const ui = (() => {
     }
   };
 
-  const changeIconColor = (icons, mode) => {
+  const changeIconColor = (iconClass, mode) => {
+    const icon = document.querySelector(`.${iconClass}`);
+
     if (mode === MODE.PICTURE) {
-      icons.forEach((icon) => {
-        icon.classList.remove("filter-black");
-        icon.classList.add("filter-white");
-      });
+      icon.classList.remove("filter-black");
+      icon.classList.add("filter-white");
     } else {
-      icons.forEach((icon) => {
-        icon.classList.remove("filter-white");
-        icon.classList.add("filter-black");
-      });
+      icon.classList.remove("filter-white");
+      icon.classList.add("filter-black");
     }
   };
 
