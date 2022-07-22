@@ -1,5 +1,6 @@
 const ICON = {
-  CHANGE_LETTER_MODE: "change-mode",
+  CHANGE_LETTER_MODE: "change-letter-mode",
+  CHANGE_PICTURE_MODE: "change-picture-mode",
   CHANGE_LANG: "change-lang",
   SHOW_INFO: "show-info",
   SOUND: "sound",

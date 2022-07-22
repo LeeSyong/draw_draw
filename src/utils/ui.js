@@ -1,4 +1,3 @@
-import stepStore from "../store/stepStore";
 import suggestStore from "../store/suggestStore";
 
 import { MODE } from "../constants/mode";
@@ -9,14 +8,6 @@ const ui = (() => {
 
     icon.classList.remove("hide");
     icon.classList.add("show");
-
-    if (stepStore.currentMode === MODE.PICTURE) {
-      icon.classList.remove("filter-black");
-      icon.classList.add("filter-white");
-    } else {
-      icon.classList.remove("filter-white");
-      icon.classList.add("filter-black");
-    }
   };
 
   const hideIcon = (iconClass) => {
