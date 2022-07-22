@@ -198,7 +198,10 @@ class DrawingCanvas {
 
           this._ctx.clearRect(0, 0, this._canvas.width, this._canvas.height);
 
-          if (!this._changeStepToStart) {
+          if (
+            !this._changeStepToStart &&
+            stepStore.currentMode === MODE.LETTER
+          ) {
             ui.addText(TEXT.DRAW_LETTER_ERROR);
           }
 
