@@ -42,7 +42,7 @@ class DrawingCanvas {
     this._canvas.addEventListener("mouseup", this._disengage.bind(this));
     this._canvas.addEventListener("mouseout", this._disengage.bind(this));
 
-    window.addEventListener("resize", () => this._resize());
+    window.addEventListener("resize", this._resize.bind(this));
   }
 
   _engage(event) {
@@ -212,7 +212,7 @@ class DrawingCanvas {
           suggestStore.setText(finalText);
           stepStore.updateStep(STEP.SUGGEST);
 
-          ui.setBackgroundColorRandomly();
+          ui.setBackgroundColorRandomly(MODE.LETTER);
         }
       }, 1000);
     }

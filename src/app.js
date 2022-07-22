@@ -120,11 +120,11 @@ class App {
     );
 
     ui.showIcon(ICON.SOUND);
-    ui.setBackgroundColorRandomly();
 
     if (stepStore.currentMode === MODE.PICTURE) {
       this._suggestionList.innerText = "";
 
+      ui.setBackgroundColorRandomly(MODE.PICTURE);
       ui.displaySuggestions(toJS(suggestStore.suggestions));
     }
   }
