@@ -24,6 +24,9 @@ const vision = (() => {
                   maxResults: 1,
                 },
               ],
+              imageContext: {
+                languageHints: ["ko"],
+              },
             },
           ],
         },
@@ -36,11 +39,6 @@ const vision = (() => {
 
       const text = result.data.responses[0].fullTextAnnotation?.text;
 
-      if (!text) {
-        canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
-        ui.addText(TEXT.DRAW_LETTER_ERROR);
-      }
-
       return text;
     } catch (error) {
       canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
@@ -48,7 +46,30 @@ const vision = (() => {
     }
   };
 
-  return Object.freeze({ recognize });
+  const validate = (text) => {
+    const specialSymbolRegExp = /[{}[\]/;:|)*`^\-_+<>♡☆Ĉ@%$\\=('"]/g;
+    const latinAlphabetRegExp = /[a-z|A-Z]/g;
+
+    if (
+      !text ||
+      specialSymbolRegExp.test(text) ||
+      latinAlphabetRegExp.test(text)
+    ) {
+      return;
+    }
+
+    const finalText = text.split("").map((char) => {
+      if (char === "\n") {
+        return " ";
+      }
+
+      return char;
+    });
+
+    return finalText.join("");
+  };
+
+  return Object.freeze({ recognize, validate });
 })();
 
 export default vision;

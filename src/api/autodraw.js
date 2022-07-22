@@ -2,9 +2,12 @@ import translate from "translate";
 import axios from "axios";
 
 import { API } from "../constants/url";
+import { TEXT } from "../constants/text";
+
+import ui from "../utils/ui";
 
 const autodraw = (() => {
-  const getSuggestions = async (shapes) => {
+  const getSuggestions = async (shapes, canvas) => {
     try {
       const response = await axios.post(API.SUGGESTIONS_ENDPOINT, {
         input_type: 0,
@@ -24,48 +27,59 @@ const autodraw = (() => {
 
       return data;
     } catch (error) {
-      alert(error);
+      canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
+      ui.addText(TEXT.DRAW_PICTURE_ERROR);
     }
   };
 
-  const extractDataFromApi = (data) => {
-    if (!data) {
+  const extractListData = (data) => {
+    const regex = /SCORESINKS: (.*) Service_Recognize:/;
+
+    if (!data[1][0]) {
       return;
     }
 
-    const regex = /SCORESINKS: (.*) Service_Recognize:/;
-    const results = JSON.parse(data[1][0][3].debug_info.match(regex)[1]);
+    if (!data[1][0][3].debug_info.match(regex)) {
+      return;
+    }
 
-    return results;
+    const suggestions = JSON.parse(data[1][0][3].debug_info.match(regex)[1]);
+
+    return suggestions;
   };
 
-  const parseSuggestions = (results) => {
-    const parsedResults = results.map((result) => {
-      const escapedName = result[0].replace(/ /g, "-");
+  const parseSuggestions = (suggestions) => {
+    const parsedSuggestions = suggestions.map((suggestion) => {
+      const escapedName = suggestion[0].replace(/ /g, "-");
 
       return {
-        name: result[0],
+        name: suggestion[0],
         url: API.SVG_ENDPOINT + escapedName + "-01.svg",
       };
     });
 
-    return parsedResults;
+    return parsedSuggestions;
   };
 
   const validateSuggestions = async (suggestions) => {
     const validSuggestions = [];
+    let results = [];
 
-    for (let i = 0; i < suggestions.length; i++) {
-      const suggestion = suggestions[i];
-
-      try {
-        await axios(suggestion.url);
-
-        validSuggestions.push(suggestion);
-      } catch (error) {
-        continue;
-      }
+    try {
+      results = await Promise.allSettled(
+        suggestions.map((suggestion) => axios.head(suggestion.url)),
+      );
+    } catch (error) {
+      return;
     }
+
+    results.forEach((result, index) => {
+      if (!result.value) {
+        return;
+      }
+
+      validSuggestions.push(suggestions[index]);
+    });
 
     return validSuggestions;
   };
@@ -86,7 +100,7 @@ const autodraw = (() => {
 
   return Object.freeze({
     getSuggestions,
-    extractDataFromApi,
+    extractListData,
     parseSuggestions,
     validateSuggestions,
     translateSuggestions,

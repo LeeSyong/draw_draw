@@ -34,7 +34,28 @@ const draw = (() => {
     ctx.closePath();
   };
 
-  return Object.freeze({ drawStartPoint, drawLine });
+  const enableToDraw = () => {
+    const icons = document.querySelectorAll(".icon-wrapper");
+    const suggestions = document.querySelector(".suggestions");
+
+    icons.forEach((icon) => icon.classList.add("can-draw"));
+    suggestions.classList.add("can-draw");
+  };
+
+  const disableToDraw = () => {
+    const icons = document.querySelectorAll(".icon-wrapper");
+    const suggestions = document.querySelector(".suggestions");
+
+    icons.forEach((icon) => icon.classList.remove("can-draw"));
+    suggestions.classList.remove("can-draw");
+  };
+
+  return Object.freeze({
+    drawStartPoint,
+    drawLine,
+    enableToDraw,
+    disableToDraw,
+  });
 })();
 
 export default draw;

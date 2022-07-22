@@ -1,22 +1,13 @@
-import stepStore from "../store/stepStore";
 import suggestStore from "../store/suggestStore";
 
 import { MODE } from "../constants/mode";
 
 const ui = (() => {
-  const showIcon = (iconClass, mode) => {
+  const showIcon = (iconClass) => {
     const icon = document.querySelector(`.${iconClass}`);
 
     icon.classList.remove("hide");
     icon.classList.add("show");
-
-    if (stepStore.currentMode === MODE.PICTURE) {
-      icon.classList.remove("filter-black");
-      icon.classList.add("filter-white");
-    } else {
-      icon.classList.remove("filter-white");
-      icon.classList.add("filter-black");
-    }
   };
 
   const hideIcon = (iconClass) => {
@@ -37,20 +28,11 @@ const ui = (() => {
 
     infoSpan.classList.add("info-text");
     infoSpan.textContent = text;
-
-    if (text.slice(0, 2) === "그림") {
-      infoSpan.classList.remove("info-letter");
-      infoSpan.classList.add("info-picture");
-    } else {
-      infoSpan.classList.remove("info-picture");
-      infoSpan.classList.add("info-letter");
-    }
-
     infoWrapper.appendChild(infoSpan);
 
     setTimeout(() => {
       infoSpan.remove();
-    }, 1000);
+    }, 1500);
   };
 
   const changeBackgroundColor = (mode) => {
@@ -77,35 +59,19 @@ const ui = (() => {
     }
   };
 
-  const setBackgroundColorRandomly = () => {
-    const { body } = document;
-    const hexValues = [
-      0,
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      "A",
-      "B",
-      "C",
-      "D",
-      "E",
-      "F",
-    ];
-    let hex = "#";
+  const setBackgroundColorRandomly = (mode) => {
+    let backgroundColor;
+    const randomHue = getRandomAmount(0, 255);
+    const lowDegree = getRandomAmount(20, 60);
+    const highDegree = getRandomAmount(60, 90);
 
-    for (let i = 0; i < 6; i++) {
-      const index = Math.floor(Math.random() * hexValues.length);
-
-      hex += hexValues[index];
+    if (mode === MODE.PICTURE) {
+      backgroundColor = `hsl(${randomHue}, ${lowDegree}%, ${lowDegree}%)`;
+    } else {
+      backgroundColor = `hsl(${randomHue}, ${highDegree}%, ${highDegree}%)`;
     }
 
-    body.style.backgroundColor = hex;
+    document.body.style.backgroundColor = backgroundColor;
   };
 
   const displaySuggestions = async (suggestions) => {
@@ -127,11 +93,19 @@ const ui = (() => {
     const suggestionItems = suggestionList.querySelectorAll(".suggestion");
 
     const handleSuggestionItemclick = (event) => {
+      const prevSelectedItem = suggestionList.querySelector(".selected");
+
       suggestionItems.forEach((suggestionItem, index) => {
-        if (event.target.textContent === suggestionItem.textContent) {
+        const currSelectedItem = event.target;
+
+        if (currSelectedItem.textContent === prevSelectedItem.textContent) {
+          return;
+        }
+
+        if (currSelectedItem.textContent === suggestionItem.textContent) {
           suggestStore.setSuggestionUrl(suggestions[index].url);
 
-          ui.setBackgroundColorRandomly();
+          ui.setBackgroundColorRandomly(MODE.PICTURE);
         }
 
         suggestionItem.classList.remove("selected");
@@ -143,6 +117,10 @@ const ui = (() => {
     suggestionItems.forEach((suggestionItem) => {
       suggestionItem.addEventListener("click", handleSuggestionItemclick);
     });
+  };
+
+  const getRandomAmount = (min, max) => {
+    return Math.floor(Math.random() * (max - min + 1) + min);
   };
 
   return Object.freeze({
