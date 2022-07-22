@@ -42,21 +42,7 @@ body {
   &.change-mode-wrapper {
     position: absolute;
     top: 93%;
-    left: 35%;
-    transform: translate(-50%, -50%);
-  }
-  &.change-lang-wrapper {
-    position: absolute;
-    top: 93%;
     left: 50%;
-    transform: translate(-50%, -50%);
-    width: 36px;
-    height: 36px;
-  }
-  &.show-info-wrapper {
-    position: absolute;
-    top: 92.8%;
-    left: 65%;
     transform: translate(-50%, -50%);
   }
   &.sound-wrapper {

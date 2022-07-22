@@ -24,9 +24,6 @@ class App {
     this._drawingCtx = this._drawingCanvas.getContext("2d");
     this._suggestionList = document.querySelector(".suggestions ul");
     this._changeModeWrapper = document.querySelector(".change-mode-wrapper");
-    this._changeLangIcon = document.querySelector(".change-lang");
-    this._showInfoIcon = document.querySelector(".show-info");
-    this._icons = [this._changeLangIcon, this._showInfoIcon];
     this._soundIcon = document.querySelector(".sound");
 
     autorun(() => {
@@ -51,8 +48,6 @@ class App {
     this.drawingSpace = new DrawingCanvas(this._drawingCanvas);
 
     ui.showIcon(ICON.CHANGE_LETTER_MODE);
-    ui.showIcon(ICON.CHANGE_LANG);
-    ui.showIcon(ICON.SHOW_INFO);
     ui.addText(TEXT.DRAW_PICTURE);
 
     this._changeModeWrapper.addEventListener("click", () => {
@@ -64,10 +59,6 @@ class App {
 
       stepStore.updateStep(STEP.START);
     });
-
-    this._changeLangIcon.addEventListener("click", () => {});
-
-    this._showInfoIcon.addEventListener("click", () => {});
 
     this._soundIcon.addEventListener("click", () => {
       this.textToSpeech._setting();
@@ -100,13 +91,11 @@ class App {
       ui.changeBackgroundColor(MODE.PICTURE);
       ui.hideIcon(ICON.CHANGE_PICTURE_MODE);
       ui.showIcon(ICON.CHANGE_LETTER_MODE);
-      ui.changeIconColor(this._icons, MODE.PICTURE);
       ui.addText(TEXT.DRAW_PICTURE);
     } else {
       ui.changeBackgroundColor(MODE.LETTER);
       ui.hideIcon(ICON.CHANGE_LETTER_MODE);
       ui.showIcon(ICON.CHANGE_PICTURE_MODE);
-      ui.changeIconColor(this._icons, MODE.LETTER);
       ui.addText(TEXT.DRAW_LETTER);
     }
   }
