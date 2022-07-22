@@ -91,11 +91,13 @@ class App {
       ui.changeBackgroundColor(MODE.PICTURE);
       ui.hideIcon(ICON.CHANGE_PICTURE_MODE);
       ui.showIcon(ICON.CHANGE_LETTER_MODE);
+      ui.changeIconColor(ICON.SOUND, MODE.PICTURE);
       ui.addText(TEXT.DRAW_PICTURE);
     } else {
       ui.changeBackgroundColor(MODE.LETTER);
       ui.hideIcon(ICON.CHANGE_LETTER_MODE);
       ui.showIcon(ICON.CHANGE_PICTURE_MODE);
+      ui.changeIconColor(ICON.SOUND, MODE.LETTER);
       ui.addText(TEXT.DRAW_LETTER);
     }
   }
