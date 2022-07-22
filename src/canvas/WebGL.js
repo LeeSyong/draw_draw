@@ -173,8 +173,6 @@ class WebGLCanvas {
       const elapsedTime = this._clock.getElapsedTime();
 
       this._backgroundModel.points.rotation.y = elapsedTime * 0.2;
-
-      this.scene.add(this._backgroundModel.group);
     }
 
     this.renderer.render(this.scene, this.camera);

@@ -32,7 +32,7 @@ class App {
     autorun(() => {
       switch (stepStore.currentStep) {
         case STEP.LOAD:
-          setTimeout(this._loading.bind(this), 2000);
+          this._loading();
           break;
         case STEP.START:
           this._starting();
