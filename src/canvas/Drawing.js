@@ -16,7 +16,6 @@ class DrawingCanvas {
   constructor(canvas) {
     this._canvas = canvas;
     this._ctx = this._canvas.getContext("2d");
-    this._icons = document.querySelectorAll(".icon-wrapper");
 
     this._startDrawing = false;
     this._drawnAt = 0;
@@ -42,7 +41,7 @@ class DrawingCanvas {
     this._canvas.addEventListener("mouseup", this._disengage.bind(this));
     this._canvas.addEventListener("mouseout", this._disengage.bind(this));
 
-    window.addEventListener("resize", () => this._resize());
+    window.addEventListener("resize", this._resize.bind(this));
   }
 
   _engage(event) {
@@ -62,14 +61,14 @@ class DrawingCanvas {
       return;
     }
 
-    this._icons.forEach((icon) => icon.classList.add("can-draw"));
-
     this._changeStepToStart = false;
 
     if (this._finishDrawing) {
       this._shapes = [];
       this._finishDrawing = false;
     }
+
+    draw.enableToDraw();
 
     this._updateXY(event);
 
@@ -116,16 +115,22 @@ class DrawingCanvas {
       return;
     }
 
-    this._icons.forEach((icon) => icon.classList.remove("can-draw"));
-
     if (!this._startDrawing && event.type === "mouseout") {
       return;
     }
 
     this._startDrawing = false;
 
+    draw.disableToDraw();
+
     if (stepStore.currentMode === MODE.PICTURE) {
       clearInterval(this._drawingInterval);
+
+      if (this._currentShape[0].length <= 1) {
+        this._ctx.clearRect(0, 0, this._canvas.width, this._canvas.height);
+
+        return;
+      }
 
       this._shapes.push(this._currentShape);
 
@@ -193,7 +198,10 @@ class DrawingCanvas {
 
           this._ctx.clearRect(0, 0, this._canvas.width, this._canvas.height);
 
-          if (!this._changeStepToStart) {
+          if (
+            !this._changeStepToStart &&
+            stepStore.currentMode === MODE.LETTER
+          ) {
             ui.addText(TEXT.DRAW_LETTER_ERROR);
           }
 
@@ -212,7 +220,7 @@ class DrawingCanvas {
           suggestStore.setText(finalText);
           stepStore.updateStep(STEP.SUGGEST);
 
-          ui.setBackgroundColorRandomly();
+          ui.setBackgroundColorRandomly(MODE.LETTER);
         }
       }, 1000);
     }

@@ -1,6 +1,6 @@
 $background-color_picture-mode: #1e1e1e;
 $background-color-letter-mode: #fffefa;
-$suggestion-color: #eeeeeecc;
+$suggestion-color: #e4e4e4de;
 $suggestion-color-selected: #fffefa;
 
 $icon-filter-black: invert(95%) sepia(88%) saturate(140%) hue-rotate(324deg)
@@ -42,21 +42,7 @@ body {
   &.change-mode-wrapper {
     position: absolute;
     top: 93%;
-    left: 35%;
-    transform: translate(-50%, -50%);
-  }
-  &.change-lang-wrapper {
-    position: absolute;
-    top: 93%;
     left: 50%;
-    transform: translate(-50%, -50%);
-    width: 36px;
-    height: 36px;
-  }
-  &.show-info-wrapper {
-    position: absolute;
-    top: 92.8%;
-    left: 65%;
     transform: translate(-50%, -50%);
   }
   &.sound-wrapper {
@@ -67,13 +53,11 @@ body {
   }
   .icon-img {
     &.hide {
-      visibility: hidden;
+      display: none;
       cursor: none;
     }
     &.show {
-      visibility: visible;
       cursor: pointer;
-      transition: all 200ms ease-in;
     }
   }
 }
@@ -94,11 +78,27 @@ body {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    &.info-picture {
-      color: $background-color-letter-mode;
-    }
-    &.info-letter {
-      color: $background-color_picture-mode;
+
+    background-image: linear-gradient(
+      to right,
+      red,
+      orange,
+      yellow,
+      green,
+      blue,
+      indigo,
+      violet,
+      red
+    );
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: rainbow-animation 200s linear infinite;
+  }
+
+  @keyframes rainbow-animation {
+    to {
+      background-position: 4500vh;
     }
   }
 }
@@ -109,6 +109,9 @@ body {
   top: 50%;
   left: 4%;
   transform: translateY(-50%);
+  &.can-draw {
+    z-index: 0;
+  }
 }
 
 .suggestions ul {
@@ -117,12 +120,15 @@ body {
 
 .suggestion {
   height: 2rem;
-  padding: 0;
+  padding: 2px 0px;
   color: $suggestion-color;
+  font-size: 1rem;
+  line-height: 1rem;
   font-weight: bold;
   list-style: none;
   cursor: pointer;
   &.selected {
     color: $suggestion-color-selected;
+    font-size: 1.3rem;
   }
 }
