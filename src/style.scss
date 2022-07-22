@@ -67,13 +67,11 @@ body {
   }
   .icon-img {
     &.hide {
-      visibility: hidden;
+      display: none;
       cursor: none;
     }
     &.show {
-      visibility: visible;
       cursor: pointer;
-      transition: all 200ms ease-in;
     }
   }
 }
