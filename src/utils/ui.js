@@ -28,20 +28,11 @@ const ui = (() => {
 
     infoSpan.classList.add("info-text");
     infoSpan.textContent = text;
-
-    if (text.slice(0, 2) === "그림") {
-      infoSpan.classList.remove("info-letter");
-      infoSpan.classList.add("info-picture");
-    } else {
-      infoSpan.classList.remove("info-picture");
-      infoSpan.classList.add("info-letter");
-    }
-
     infoWrapper.appendChild(infoSpan);
 
     setTimeout(() => {
       infoSpan.remove();
-    }, 1000);
+    }, 1500);
   };
 
   const changeBackgroundColor = (mode) => {

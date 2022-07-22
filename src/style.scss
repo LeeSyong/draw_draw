@@ -92,6 +92,28 @@ body {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
+
+    background-image: linear-gradient(
+      to right,
+      red,
+      orange,
+      yellow,
+      green,
+      blue,
+      indigo,
+      violet,
+      red
+    );
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: rainbow-animation 200s linear infinite;
+  }
+
+  @keyframes rainbow-animation {
+    to {
+      background-position: 4500vh;
+    }
   }
 }
 
