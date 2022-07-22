@@ -16,7 +16,6 @@ class DrawingCanvas {
   constructor(canvas) {
     this._canvas = canvas;
     this._ctx = this._canvas.getContext("2d");
-    this._icons = document.querySelectorAll(".icon-wrapper");
 
     this._startDrawing = false;
     this._drawnAt = 0;
@@ -62,14 +61,14 @@ class DrawingCanvas {
       return;
     }
 
-    this._icons.forEach((icon) => icon.classList.add("can-draw"));
-
     this._changeStepToStart = false;
 
     if (this._finishDrawing) {
       this._shapes = [];
       this._finishDrawing = false;
     }
+
+    draw.enableToDraw();
 
     this._updateXY(event);
 
@@ -116,13 +115,13 @@ class DrawingCanvas {
       return;
     }
 
-    this._icons.forEach((icon) => icon.classList.remove("can-draw"));
-
     if (!this._startDrawing && event.type === "mouseout") {
       return;
     }
 
     this._startDrawing = false;
+
+    draw.disableToDraw();
 
     if (stepStore.currentMode === MODE.PICTURE) {
       clearInterval(this._drawingInterval);
