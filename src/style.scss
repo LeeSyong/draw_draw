@@ -1,6 +1,6 @@
 $background-color_picture-mode: #1e1e1e;
 $background-color-letter-mode: #fffefa;
-$suggestion-color: #eeeeeee8;
+$suggestion-color: #e4e4e4de;
 $suggestion-color-selected: #fffefa;
 
 $icon-filter-black: invert(95%) sepia(88%) saturate(140%) hue-rotate(324deg)
@@ -120,12 +120,15 @@ body {
 
 .suggestion {
   height: 2rem;
-  padding: 0;
+  padding: 2px 0px;
   color: $suggestion-color;
+  font-size: 1rem;
+  line-height: 1rem;
   font-weight: bold;
   list-style: none;
   cursor: pointer;
   &.selected {
     color: $suggestion-color-selected;
+    font-size: 1.3rem;
   }
 }
