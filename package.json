@@ -2,6 +2,11 @@
   "name": "draw_draw",
   "version": "1.0.0",
   "private": true,
+  "jest": {
+    "moduleNameMapper": {
+      "\\.(jpg|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$": "<rootDir>/src/__test__/mocks/fileMock.js"
+    }
+  },
   "scripts": {
     "build": "NODE_ENV=production webpack --config ./webpack/webpack.prod.js",
     "dev": "webpack serve --config ./webpack/webpack.dev.js",
