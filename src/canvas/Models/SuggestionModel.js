@@ -55,13 +55,14 @@ class SuggestionModel {
 
   _createVertices(paths) {
     const delay = 1;
-    const gradient = chroma.scale([
-      "ef476f",
-      "ffd166",
-      "06d6a0",
-      "118ab2",
-      "073b4c",
-    ]);
+    const getRandomColor = () => {
+      return [...Array(6)]
+        .map(() => Math.floor(Math.random() * 16).toString(16))
+        .join("");
+    };
+    const randomColorArray = [...Array(5)].map(() => getRandomColor());
+    const gradient = chroma.scale(randomColorArray);
+
     const colorRGB = {
       r: Math.random() * (stepStore.currentMode === MODE.PICTURE ? 100 : 30),
       g: Math.random() * (stepStore.currentMode === MODE.PICTURE ? 100 : 30),
