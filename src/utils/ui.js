@@ -75,18 +75,17 @@ const ui = (() => {
   const displaySuggestions = async (suggestions) => {
     const suggestionList = document.querySelector(".suggestions ul");
 
-    for (let i = 0; i < suggestions.length; i++) {
-      const suggestion = suggestions[i];
+    suggestions.forEach((suggestion, index) => {
       const suggestionItem = document.createElement("li");
 
       suggestionItem.textContent = suggestion.name;
       suggestionItem.classList.add("suggestion");
       suggestionList.appendChild(suggestionItem);
 
-      if (i === 0) {
+      if (index === 0) {
         suggestionItem.classList.add("selected");
       }
-    }
+    });
 
     const suggestionItems = suggestionList.querySelectorAll(".suggestion");
 
