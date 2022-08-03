@@ -7,10 +7,8 @@ import stepStore from "../../store/stepStore";
 import { MODE } from "../../constants/mode";
 
 class SuggestionModel {
-  constructor(svg, scene, ratio) {
+  constructor(svg) {
     this._svg = svg;
-    this.scene = scene;
-    this._ratio = ratio;
 
     this._colors = [];
     this._sizes = [];
@@ -27,7 +25,6 @@ class SuggestionModel {
   _getPaths(svg) {
     this._paths = svg.querySelectorAll("path");
     this._svgViewBoxWidth = svg.viewBox.baseVal.width;
-    this._svgViewBoxHeight = svg.viewBox.baseVal.height;
 
     svg.remove();
   }
@@ -54,7 +51,6 @@ class SuggestionModel {
   }
 
   _createVertices(paths) {
-    const delay = 1;
     const getRandomColor = () => {
       return [...Array(6)]
         .map(() => Math.floor(Math.random() * 16).toString(16))
@@ -63,14 +59,14 @@ class SuggestionModel {
     const randomColorArray = [...Array(5)].map(() => getRandomColor());
     const gradient = chroma.scale(randomColorArray);
 
-    const colorRGB = {
-      r: Math.random() * (stepStore.currentMode === MODE.PICTURE ? 100 : 30),
-      g: Math.random() * (stepStore.currentMode === MODE.PICTURE ? 100 : 30),
-      b: Math.random() * (stepStore.currentMode === MODE.PICTURE ? 100 : 30),
+    const valueForEndRGB = {
+      r: Math.random() * 600 + 300,
+      g: Math.random() * 600 + 300,
+      b: Math.random() * 600 + 300,
     };
-    const positionXYZ = {
-      x: Math.random() * 3000,
-      y: Math.random() * 3000,
+    const distanceToEnd = {
+      x: Math.random() * 3000 + 500,
+      y: Math.random() * 3000 + 500,
       z: Math.random() * 3000,
     };
 
@@ -82,32 +78,32 @@ class SuggestionModel {
     });
 
     paths.forEach((path) => {
-      const length = path.getTotalLength();
+      const totalLength = path.getTotalLength();
 
-      for (let i = 0; i < length; i += 30) {
-        const pointLength = i;
-        const point = path.getPointAtLength(pointLength);
+      for (let i = 0; i < totalLength; i += 7) {
+        const distance = i;
+        const point = path.getPointAtLength(distance);
+
+        const coloursX = point.x / this._svgViewBoxWidth;
+        const color = gradient(coloursX).rgb();
 
         const end = new THREE.Vector3(
-          point.x - this._svgViewBoxWidth / 2,
-          -point.y + this._svgViewBoxHeight / 2,
-          (Math.random() - 0.5) * 50,
-        );
-        const start = new THREE.Vector3(
-          end.x + (Math.random() - 0.5) * positionXYZ.x,
-          end.y + (Math.random() - 0.5) * positionXYZ.y,
-          end.z + (Math.random() - 0.5) * positionXYZ.z,
+          point.x,
+          -point.y,
+          (Math.random() - 0.5) * 150,
         );
 
-        const coloursX =
-          point.x / this._svgViewBoxWidth + (Math.random() - 0.5) * 0.2;
-        const color = gradient(coloursX).rgb();
+        end.r = 1 - (end.z + 200) / valueForEndRGB.r;
+        end.g = 1 - (end.z + 200) / valueForEndRGB.g;
+        end.b = 1 - (end.z + 200) / valueForEndRGB.b;
 
         this.vertices.push(end);
 
-        end.r = 1 - (end.z + 7.5) / colorRGB.r;
-        end.g = 1 - (end.z + 7.5) / colorRGB.g;
-        end.b = 1 - (end.z + 7.5) / colorRGB.b;
+        const start = new THREE.Vector3(
+          end.x + (Math.random() - 0.5) * distanceToEnd.x,
+          end.y + (Math.random() - 0.5) * distanceToEnd.y,
+          end.z + (Math.random() - 0.5) * distanceToEnd.z,
+        );
 
         timeline.from(
           end,
@@ -118,13 +114,13 @@ class SuggestionModel {
             r: color[0] / 255,
             g: color[1] / 255,
             b: color[2] / 255,
-            duration: "random(1, 1.5)",
+            duration: "random(1, 2)",
             ease: "power2.out",
           },
-          delay * 0.0012,
+          0.001,
         );
 
-        this._sizes.push(Math.random() * 15 + 10 * this._ratio);
+        this._sizes.push(Math.random() * 15 + 15);
       }
     });
   }
