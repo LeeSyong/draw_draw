@@ -59,13 +59,12 @@ class WebGLCanvas {
 
     const svg = await svgConverter.createSvgImg(suggestStore.suggestionUrl);
     const circles = svg.querySelectorAll("circle");
-    const ratio = this.renderer.getPixelRatio();
 
     if (circles.length) {
       svgConverter.convertCircleToPath(circles, svg);
     }
 
-    this._pictureModel = new SuggestionModel(svg, this.scene, ratio);
+    this._pictureModel = new SuggestionModel(svg);
 
     this.scene.add(this._pictureModel.group);
   }
@@ -75,9 +74,8 @@ class WebGLCanvas {
     this._removeObject(this._letterModel);
 
     const svg = await svgConverter.createSvgText(suggestStore.text);
-    const ratio = this.renderer.getPixelRatio();
 
-    this._letterModel = new SuggestionModel(svg, this.scene, ratio);
+    this._letterModel = new SuggestionModel(svg);
 
     this.scene.add(this._letterModel.group);
   }
