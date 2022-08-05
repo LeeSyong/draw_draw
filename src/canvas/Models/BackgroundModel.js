@@ -17,21 +17,16 @@ class BackgroundModel {
     const COUNT = 4000;
     const DISTANCE = 2;
 
-    const points = new Float32Array(COUNT * 3);
-    const colors = new Float32Array(COUNT * 3);
-
-    for (let i = 0; i < points.length; i++) {
-      points[i] = THREE.MathUtils.randFloatSpread(DISTANCE * 2);
-      colors[i] = Math.random();
-    }
+    const points = new Float32Array(COUNT * 3).map((point) =>
+      THREE.MathUtils.randFloatSpread(DISTANCE * 2),
+    );
+    const colors = new Float32Array(COUNT * 3).map((color) => Math.random());
 
     this.geometry = new THREE.BufferGeometry();
-
     this.geometry.setAttribute(
       "position",
       new THREE.Float32BufferAttribute(points, 3),
     );
-
     this.geometry.setAttribute(
       "color",
       new THREE.Float32BufferAttribute(colors, 3),
